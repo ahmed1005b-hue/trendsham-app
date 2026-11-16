@@ -1,0 +1,1 @@
+class Coupon { final String id = ''; }
