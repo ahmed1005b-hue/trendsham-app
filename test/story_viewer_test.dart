@@ -43,7 +43,7 @@ void main() {
   });
 
   test('site links open in-app screens, others do not', () {
-    final site = ApiConfig.storageBaseUrl;
+    const site = ApiConfig.storageBaseUrl;
     expect(StoryViewer.inAppTarget(Uri.parse('$site/product/red-jacket')),
         isA<ProductDetailScreen>());
     expect(StoryViewer.inAppTarget(Uri.parse('$site/store/12')),
