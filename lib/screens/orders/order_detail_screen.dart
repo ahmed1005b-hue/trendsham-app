@@ -505,6 +505,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     _summaryRow('الخصم', -order.discountAmount,
                         valueColor: AppColors.primaryDark),
                   _summaryRow('الشحن', order.shippingFee),
+                  if (order.shippingDebtCharged > 0)
+                    _summaryRow(
+                        'أجرة شحن طلب رفضت استلامه', order.shippingDebtCharged,
+                        valueColor: AppColors.danger),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -627,12 +631,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const AppText('عنوان التوصيل',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  AppText(
+                      order.deliveryMethod == 'center'
+                          ? 'الاستلام من مركز شحن'
+                          : 'عنوان التوصيل',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
                   AppText('${order.shippingName} - ${order.shippingPhone}'),
                   AppText(order.shippingAddress,
                       style: const TextStyle(color: AppColors.muted)),
+                  if (order.refused)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6),
+                      child: AppText('رفضت استلام هذا الطلب.',
+                          style: TextStyle(color: AppColors.danger)),
+                    ),
                 ],
               ),
             ),

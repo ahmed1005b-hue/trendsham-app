@@ -155,6 +155,15 @@ class Order {
   final String shippingName;
   final String shippingPhone;
   final String shippingAddress;
+
+  /// home توصيل للبيت | center استلام من مركز كرم
+  final String deliveryMethod;
+
+  /// أجرة شحن طلب رفضه الزبون سابقاً وأُضيفت لهذا الطلب
+  final double shippingDebtCharged;
+
+  /// رفض الزبون استلام هذا الطلب
+  final bool refused;
   final int? itemsCount;
   final bool canBeCancelled;
   final List<OrderItem> items;
@@ -177,6 +186,9 @@ class Order {
     required this.shippingName,
     required this.shippingPhone,
     required this.shippingAddress,
+    this.deliveryMethod = 'home',
+    this.shippingDebtCharged = 0,
+    this.refused = false,
     this.itemsCount,
     required this.canBeCancelled,
     this.items = const [],
@@ -269,6 +281,9 @@ class Order {
       shippingName: json['shipping_name']?.toString() ?? '',
       shippingPhone: json['shipping_phone']?.toString() ?? '',
       shippingAddress: json['shipping_address']?.toString() ?? '',
+      deliveryMethod: json['delivery_method']?.toString() ?? 'home',
+      shippingDebtCharged: _toDouble(json['shipping_debt_charged']),
+      refused: _toBool(json['refused']),
       itemsCount:
           _toInt(json['items_count'] ?? json['total_items'] ?? json['count']),
       canBeCancelled: _toBool(json['can_be_cancelled']),

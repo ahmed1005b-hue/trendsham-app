@@ -105,6 +105,9 @@ class Product {
   final String? dealLabel;
   final DateTime? dealEndsAt;
   final int stockQuantity;
+
+  /// وزن القطعة بالغرام (للشحن)، null إن لم يحدده البائع
+  final int? weightGrams;
   final String? status;
   final bool inStock;
   final double? averageRating;
@@ -140,6 +143,7 @@ class Product {
     this.dealLabel,
     this.dealEndsAt,
     required this.stockQuantity,
+    this.weightGrams,
     this.status,
     required this.inStock,
     this.averageRating,
@@ -349,6 +353,7 @@ class Product {
               : null),
       dealEndsAt: activeDeal?.endsAt,
       stockQuantity: _toInt(json['stock_quantity']) ?? 0,
+      weightGrams: _toInt(json['weight_grams']),
       status: json['status']?.toString(),
       inStock: json['in_stock'] == true || (_toInt(json['stock_quantity']) ?? 0) > 0,
       averageRating: parseNullableDouble(json['average_rating']),

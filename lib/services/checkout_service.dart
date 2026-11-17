@@ -33,6 +33,23 @@ class CheckoutSummary {
   /// رصيد بطاقات الهدايا المتاح (بالليرة)
   final double giftBalance;
 
+  /// طريقة الاستلام التي حُسبت لها الأجرة: home | center
+  final String deliveryMethod;
+
+  /// أجرة الشحن بعد الكوبون لكل طريقة استلام
+  final Map<String, double> shippingByMethod;
+
+  /// عدد الطرود (طرد لكل متجر) وهل فيها طرد ثقيل (10 كغ فأكثر)
+  final int parcelCount;
+  final bool hasHeavyParcel;
+
+  /// أجرة طلب رفض الزبون استلامه سابقاً، تُضاف لهذا الطلب
+  final double shippingDebt;
+
+  /// الدفع عند الاستلام ممنوع مؤقتاً بعد رفض استلام طلب
+  final bool codBlocked;
+  final String? codBlockedMessage;
+
   const CheckoutSummary({
     required this.subtotal,
     required this.shippingFee,
@@ -48,6 +65,13 @@ class CheckoutSummary {
     this.couponDroppedReason,
     this.loyalty,
     this.giftBalance = 0,
+    this.deliveryMethod = 'home',
+    this.shippingByMethod = const {},
+    this.parcelCount = 1,
+    this.hasHeavyParcel = false,
+    this.shippingDebt = 0,
+    this.codBlocked = false,
+    this.codBlockedMessage,
   });
 
   factory CheckoutSummary.fromJson(Map<String, dynamic> json) {
@@ -78,6 +102,18 @@ class CheckoutSummary {
           ? CheckoutLoyalty.fromJson(Map<String, dynamic>.from(json['loyalty']))
           : null,
       giftBalance: d(json['gift_balance']),
+      deliveryMethod: json['delivery_method']?.toString() ?? 'home',
+      shippingByMethod: json['shipping_by_method'] is Map
+          ? (json['shipping_by_method'] as Map)
+              .map((k, v) => MapEntry(k.toString(), d(v)))
+          : const {},
+      parcelCount: json['parcels'] is List ? (json['parcels'] as List).length : 1,
+      hasHeavyParcel: json['parcels'] is List &&
+          (json['parcels'] as List)
+              .any((p) => p is Map && p['heavy'] == true),
+      shippingDebt: d(json['shipping_debt']),
+      codBlocked: json['cod_blocked'] == true,
+      codBlockedMessage: json['cod_blocked_message']?.toString(),
     );
   }
 }
@@ -86,9 +122,12 @@ class CheckoutService {
   final ApiClient _api = ApiClient();
 
   /// couponId: null = أفضل كوبون تلقائياً، 0 = بلا كوبون، رقم = كوبون من المحفظة
-  Future<CheckoutSummary> summary({int? couponId}) async {
-    final data = await _api.get('/checkout/summary',
-        query: couponId == null ? null : {'customer_coupon_id': couponId});
+  Future<CheckoutSummary> summary(
+      {int? couponId, String deliveryMethod = 'home'}) async {
+    final data = await _api.get('/checkout/summary', query: {
+      'delivery_method': deliveryMethod,
+      if (couponId != null) 'customer_coupon_id': couponId,
+    });
     if (data is! Map) {
       throw const FormatException('استجابة ملخص الدفع غير صالحة.');
     }
@@ -103,11 +142,16 @@ class CheckoutService {
     int? couponId,
     int usePoints = 0,
     bool useGiftBalance = false,
+    String deliveryMethod = 'home',
+    int? pickupCenterId,
   }) async {
     final data = await _api.post('/checkout', body: {
       'shipping_name': shippingName,
       'shipping_phone': shippingPhone,
-      'shipping_address': shippingAddress,
+      // الاستلام من مركز لا يحتاج عنواناً (الخادم يكتب عنوان المركز)
+      if (deliveryMethod == 'home') 'shipping_address': shippingAddress,
+      'delivery_method': deliveryMethod,
+      if (deliveryMethod == 'center') 'pickup_center_id': pickupCenterId,
       'payment_method': paymentMethod,
       // غائب = الأفضل تلقائياً (يُعاد التحقق في الخادم)
       if (couponId != null) 'customer_coupon_id': couponId,

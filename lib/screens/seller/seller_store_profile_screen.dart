@@ -10,13 +10,18 @@ import '../../l10n/app_localizations.dart';
 import '../../models/seller_profile.dart';
 import '../../services/api_exception.dart';
 import '../../services/seller_service.dart';
+import '../../services/shipping_center_service.dart';
 import '../../utils/image_picker_helper.dart';
 import '../../widgets/app_state_message.dart';
 
 class SellerStoreProfileScreen extends StatefulWidget {
   final SellerProfileModel store;
 
-  const SellerStoreProfileScreen({super.key, required this.store});
+  /// مصدر مراكز الشحن (يُستبدل في الاختبارات)
+  final ShippingCenterService? centerService;
+
+  const SellerStoreProfileScreen(
+      {super.key, required this.store, this.centerService});
 
   @override
   State<SellerStoreProfileScreen> createState() =>
@@ -39,6 +44,11 @@ class _SellerStoreProfileScreenState extends State<SellerStoreProfileScreen> {
   XFile? _newBanner;
   bool _isSaving = false;
   String? _error;
+
+  /// الشحن مع كرم: مركز التسليم واستلام المندوب
+  int? _dropoffCenterId;
+  bool _courierPickup = false;
+  List<ShippingCenterGroup> _centerGroups = const [];
 
   String _translate(String value) =>
       AppLocalizations.of(context).translate(value);
@@ -67,6 +77,11 @@ class _SellerStoreProfileScreenState extends State<SellerStoreProfileScreen> {
         TextEditingController(text: widget.store.shippingPolicy ?? '');
     _returnsController =
         TextEditingController(text: widget.store.returnPolicy ?? '');
+    _dropoffCenterId = widget.store.dropoffCenterId;
+    _courierPickup = widget.store.courierPickup;
+    (widget.centerService ?? ShippingCenterService()).groups().then((groups) {
+      if (mounted) setState(() => _centerGroups = groups);
+    }).catchError((_) {});
   }
 
   @override
@@ -121,6 +136,8 @@ class _SellerStoreProfileScreenState extends State<SellerStoreProfileScreen> {
           'business_hours': _hoursController.text.trim(),
           'business_hours_schedule': _hoursScheduleController.text.trim(),
           'shipping_policy': _shippingController.text.trim(),
+          'dropoff_center_id': _dropoffCenterId?.toString() ?? '',
+          'courier_pickup': _courierPickup ? '1' : '0',
           'return_policy': _returnsController.text.trim(),
         },
         files: {
@@ -349,6 +366,65 @@ class _SellerStoreProfileScreenState extends State<SellerStoreProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
+                  Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const AppText('الشحن مع شركة كرم',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          const AppText(
+                              'اختر مركز كرم الذي تسلّم فيه طرودك، أو اطلب أن يستلمها المندوب من متجرك.',
+                              style: TextStyle(
+                                  fontSize: 12, color: AppColors.muted)),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<int>(
+                            key: const ValueKey('dropoff-center'),
+                            initialValue: _centerGroups.any((g) => g.centers
+                                    .any((c) => c.id == _dropoffCenterId))
+                                ? _dropoffCenterId
+                                : null,
+                            isExpanded: true,
+                            decoration: InputDecoration(
+                                labelText: context.tr('مركز التسليم'),
+                                border: const OutlineInputBorder()),
+                            hint: const AppText('اختر المركز الأقرب لك'),
+                            items: [
+                              for (final g in _centerGroups) ...[
+                                DropdownMenuItem<int>(
+                                  enabled: false,
+                                  child: AppText(g.governorateLabel,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.emerald)),
+                                ),
+                                for (final c in g.centers)
+                                  DropdownMenuItem<int>(
+                                    value: c.id,
+                                    child: Text('${c.name} - ${c.address}',
+                                        overflow: TextOverflow.ellipsis),
+                                  ),
+                              ],
+                            ],
+                            onChanged: (v) =>
+                                setState(() => _dropoffCenterId = v),
+                          ),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            value: _courierPickup,
+                            onChanged: (v) =>
+                                setState(() => _courierPickup = v),
+                            title: const AppText(
+                                'أريد أن يستلم المندوب الطرود من متجري',
+                                style: TextStyle(fontSize: 14)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   TextFormField(
                     controller: _shippingController,
                     maxLength: 4000,

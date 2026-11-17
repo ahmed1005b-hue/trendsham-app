@@ -5,6 +5,7 @@ import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/checkout_service.dart';
+import '../../services/shipping_center_service.dart';
 import '../../services/api_exception.dart';
 import '../../services/payment_api.dart';
 import '../../utils/auth_prompt.dart';
@@ -36,6 +37,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   List<UserAddress> _addresses = const [];
   int? _selectedAddressId;
   String _paymentMethod = 'cash_on_delivery';
+
+  /// طريقة الاستلام: home توصيل للبيت، center استلام من مركز كرم
+  String _deliveryMethod = 'home';
+  int? _pickupCenterId;
+  List<ShippingCenterGroup> _centerGroups = const [];
+  bool _centersLoading = false;
+  final _centerService = ShippingCenterService();
 
   /// يظهر خيار البطاقة فقط عندما يكون الدفع الإلكتروني مفعّلاً في السيرفر
   bool _onlineEnabled = false;
@@ -127,10 +135,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _summaryError = null;
     });
     try {
-      final summary = await _checkoutService.summary(couponId: _couponChoice);
+      final summary = await _checkoutService.summary(
+          couponId: _couponChoice, deliveryMethod: _deliveryMethod);
       if (!mounted) return;
       setState(() {
         _summary = summary;
+        // بعد رفض استلام طلب: الدفع عند الاستلام ممنوع مؤقتاً
+        if (summary.codBlocked && _paymentMethod == 'cash_on_delivery') {
+          _paymentMethod = 'card';
+        }
         // الكوبون المختار لم يعد صالحاً: نرجع للأفضل تلقائياً بدل أن يعلق العميل
         if (summary.couponDroppedReason != null) {
           _couponNotice =
@@ -145,6 +158,114 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     } finally {
       if (mounted) setState(() => _summaryLoading = false);
     }
+  }
+
+  Future<void> _setDeliveryMethod(String method) async {
+    if (method == _deliveryMethod) return;
+    setState(() => _deliveryMethod = method);
+    if (method == 'center' && _centerGroups.isEmpty) {
+      setState(() => _centersLoading = true);
+      try {
+        final groups = await _centerService.groups();
+        if (mounted) setState(() => _centerGroups = groups);
+      } on ApiException catch (e) {
+        if (mounted) setState(() => _summaryError = e.message);
+      } catch (_) {
+        if (mounted) {
+          setState(() => _summaryError = 'تعذر تحميل مراكز الشحن.');
+        }
+      } finally {
+        if (mounted) setState(() => _centersLoading = false);
+      }
+    }
+    await _loadSummary();
+  }
+
+  Widget _deliveryOption(String method, IconData icon, String title,
+      String hint, String currency) {
+    final selected = _deliveryMethod == method;
+    final fee = _summary?.shippingByMethod[method];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        key: ValueKey('delivery-$method'),
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _setDeliveryMethod(method),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppColors.emerald.withValues(alpha: 0.08)
+                : Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+                color: selected
+                    ? AppColors.emerald
+                    : Theme.of(context).colorScheme.outlineVariant,
+                width: 1.5),
+          ),
+          child: Row(children: [
+            Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off,
+                color: selected ? AppColors.emerald : AppColors.muted, size: 20),
+            const SizedBox(width: 10),
+            Icon(icon, color: AppColors.emerald),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText(title,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  AppText(hint,
+                      style:
+                          const TextStyle(fontSize: 12, color: AppColors.muted)),
+                ],
+              ),
+            ),
+            if (fee != null)
+              AppText(fee == 0 ? 'مجاني' : '${fee.toStringAsFixed(0)} $currency',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _centerPicker() {
+    if (_centersLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    final items = <DropdownMenuItem<int>>[];
+    for (final group in _centerGroups) {
+      items.add(DropdownMenuItem<int>(
+        enabled: false,
+        child: AppText(group.governorateLabel,
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, color: AppColors.emerald)),
+      ));
+      for (final c in group.centers) {
+        items.add(DropdownMenuItem<int>(
+          value: c.id,
+          child: Text('${c.name} - ${c.address}',
+              overflow: TextOverflow.ellipsis),
+        ));
+      }
+    }
+    return DropdownButtonFormField<int>(
+      key: const ValueKey('pickup-center'),
+      initialValue: _pickupCenterId,
+      isExpanded: true,
+      items: items,
+      decoration: InputDecoration(labelText: context.tr('مركز الاستلام')),
+      hint: const AppText('اختر المركز الأقرب لك'),
+      onChanged: (v) => setState(() => _pickupCenterId = v),
+      validator: (v) => _deliveryMethod == 'center' && v == null
+          ? context.tr('اختر مركز الشحن الذي ستستلم منه الطلب.')
+          : null,
+    );
   }
 
   /// قائمة كوبونات المحفظة: الصالح مع التوفير، وغير الصالح مع السبب
@@ -219,6 +340,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         couponId: _couponChoice,
         usePoints: _pointsToUse,
         useGiftBalance: _useGiftBalance && (_summary?.giftBalance ?? 0) > 0,
+        deliveryMethod: _deliveryMethod,
+        pickupCenterId: _pickupCenterId,
       );
 
       if (!mounted) return;
@@ -472,8 +595,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   validator: (v) =>
                       (v == null || v.trim().isEmpty) ? context.tr('مطلوب') : null,
                 ),
-                const SizedBox(height: 12),
-                if (_addresses.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const AppText('طريقة الاستلام',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                _deliveryOption('home', Icons.home_outlined, 'توصيل للبيت',
+                    'يصلك المندوب إلى عنوانك', currency),
+                _deliveryOption('center', Icons.storefront_outlined,
+                    'استلام من مركز شحن', 'تستلمه من مركز كرم الأقرب لك', currency),
+                const SizedBox(height: 4),
+                if (_deliveryMethod == 'center') _centerPicker(),
+                if (_deliveryMethod == 'home' && _addresses.isNotEmpty) ...[
                   const AppText('عناويني المحفوظة',
                       style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 6),
@@ -502,6 +634,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   const SizedBox(height: 8),
                 ],
+                if (_deliveryMethod == 'home')
                 Align(
                   alignment: AlignmentDirectional.centerStart,
                   child: TextButton.icon(
@@ -512,6 +645,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         _addresses.isEmpty ? 'أضف عنوان شحن' : 'إدارة عناويني'),
                   ),
                 ),
+                if (_deliveryMethod == 'home')
                 TextFormField(
                   controller: _addressController,
                   maxLines: 3,
@@ -530,12 +664,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   },
                   child: Column(
                     children: [
-                      const RadioListTile(
-                        value: 'cash_on_delivery',
-                        title: AppText('الدفع عند الاستلام'),
-                        subtitle: AppText('تأكيد يدوي/عند الاستلام',
-                            style: TextStyle(fontSize: 12)),
-                      ),
+                      if (summary?.codBlocked == true)
+                        Container(
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                              color: Colors.orange.shade50,
+                              borderRadius: BorderRadius.circular(8)),
+                          child: AppText(summary!.codBlockedMessage ?? '',
+                              style: TextStyle(
+                                  color: Colors.orange.shade900, fontSize: 13)),
+                        )
+                      else
+                        const RadioListTile(
+                          value: 'cash_on_delivery',
+                          title: AppText('الدفع عند الاستلام'),
+                          subtitle: AppText('تأكيد يدوي/عند الاستلام',
+                              style: TextStyle(fontSize: 12)),
+                        ),
                       if (_onlineEnabled)
                         const RadioListTile(
                           value: 'card',
@@ -732,7 +878,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const AppText('رسوم الشحن'),
+                            AppText((summary?.parcelCount ?? 1) > 1
+                                ? 'رسوم الشحن (${summary!.parcelCount} طرود، طرد من كل متجر)'
+                                : 'رسوم الشحن'),
                             if (summary != null &&
                                 shipping < summary.baseShippingFee)
                               Text.rich(TextSpan(children: [
@@ -754,6 +902,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               AppText('${shipping.toStringAsFixed(0)} $currency'),
                           ],
                         ),
+                        if (summary?.hasHeavyParcel == true)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 4),
+                            child: AppText(
+                                'طرد وزنه 10 كغ أو أكثر له أجرة شحن أعلى.',
+                                style: TextStyle(
+                                    color: AppColors.muted, fontSize: 12)),
+                          ),
+                        if ((summary?.shippingDebt ?? 0) > 0) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const AppText('أجرة شحن طلب رفضت استلامه',
+                                  style: TextStyle(color: AppColors.danger)),
+                              AppText(
+                                  '+ ${summary!.shippingDebt.toStringAsFixed(0)} $currency',
+                                  style:
+                                      const TextStyle(color: AppColors.danger)),
+                            ],
+                          ),
+                        ],
                         const Divider(),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

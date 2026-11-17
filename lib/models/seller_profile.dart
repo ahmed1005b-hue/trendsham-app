@@ -10,6 +10,10 @@ class SellerProfileModel {
   final String? businessHours;
   final Map<String, dynamic>? businessHoursSchedule;
   final String? shippingPolicy;
+
+  /// مركز كرم الذي يسلّم فيه البائع طروده، وهل يستلمها المندوب من المتجر
+  final int? dropoffCenterId;
+  final bool courierPickup;
   final String? returnPolicy;
   final String? commercialRegister;
   final String? identityType;
@@ -46,6 +50,8 @@ class SellerProfileModel {
     this.businessHours,
     this.businessHoursSchedule,
     this.shippingPolicy,
+    this.dropoffCenterId,
+    this.courierPickup = false,
     this.returnPolicy,
     this.commercialRegister,
     this.identityType,
@@ -92,6 +98,8 @@ class SellerProfileModel {
           ? Map<String, dynamic>.from(json['business_hours_schedule'] as Map)
           : null,
       shippingPolicy: json['shipping_policy']?.toString(),
+      dropoffCenterId: int.tryParse(json['dropoff_center_id']?.toString() ?? ''),
+      courierPickup: json['courier_pickup'] == true,
       returnPolicy: json['return_policy']?.toString(),
       commercialRegister: json['commercial_register']?.toString(),
       identityType: json['identity_type']?.toString(),

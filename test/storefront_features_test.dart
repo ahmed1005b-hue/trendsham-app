@@ -7,6 +7,7 @@ import 'package:trendsham/models/seller_profile.dart';
 import 'package:trendsham/models/vendor.dart';
 import 'package:trendsham/screens/seller/seller_store_profile_screen.dart';
 import 'package:trendsham/services/api_client.dart';
+import 'package:trendsham/services/shipping_center_service.dart';
 import 'package:trendsham/services/store_service.dart';
 import 'package:trendsham/services/store_visitor_token_storage.dart';
 import 'package:trendsham/widgets/attribution_metrics_card.dart';
@@ -202,7 +203,9 @@ void main() {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        home: SellerStoreProfileScreen(store: store),
+        home: SellerStoreProfileScreen(
+            store: store,
+            centerService: ShippingCenterService(api: _FakeApiClient())),
       ),
     );
     await tester.pumpAndSettle();

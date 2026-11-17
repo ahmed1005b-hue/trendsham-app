@@ -50,6 +50,7 @@ class _SellerProductFormScreenState extends State<SellerProductFormScreen> {
   late final TextEditingController _compareAtPriceController;
   late final TextEditingController _stockController;
   late final TextEditingController _lowStockController;
+  late final TextEditingController _weightController;
 
   List<Category> _categories = [];
   int? _selectedCategoryId;
@@ -159,6 +160,7 @@ class _SellerProductFormScreenState extends State<SellerProductFormScreen> {
     _compareAtPriceController.dispose();
     _stockController.dispose();
     _lowStockController.dispose();
+    _weightController.dispose();
     super.dispose();
   }
 
@@ -178,6 +180,7 @@ class _SellerProductFormScreenState extends State<SellerProductFormScreen> {
     _stockController = TextEditingController(
         text: p != null ? p.stockQuantity.toString() : '0');
     _lowStockController = TextEditingController(text: '5');
+    _weightController = TextEditingController();
     _selectedCategoryId = p?.category?.id;
     _existingImages = p?.images ?? [];
 
@@ -199,6 +202,11 @@ class _SellerProductFormScreenState extends State<SellerProductFormScreen> {
       if (widget.isEditing) {
         final full = await _productService.show(widget.product!.slug);
         _skuController.text = full.sku ?? '';
+        if (full.weightGrams != null) {
+          _weightController.text = (full.weightGrams! / 1000)
+              .toStringAsFixed(2)
+              .replaceAll(RegExp(r'\.?0+$'), '');
+        }
         _existingImages = full.images;
         _selectedCategoryId = full.category?.id;
         _hadVariants = full.variants.isNotEmpty;
@@ -435,6 +443,7 @@ class _SellerProductFormScreenState extends State<SellerProductFormScreen> {
       'low_stock_threshold': _lowStockController.text.trim().isEmpty
           ? '5'
           : _lowStockController.text.trim(),
+      'weight_kg': _weightController.text.trim(),
       'status': _status,
     };
     if (options != null) {
@@ -795,6 +804,28 @@ class _SellerProductFormScreenState extends State<SellerProductFormScreen> {
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        key: const ValueKey('product-weight'),
+                        controller: _weightController,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: context.tr('وزن القطعة مع التغليف'),
+                          suffixText: context.tr('كغ'),
+                          helperText: context.tr(
+                              'لحساب أجرة الشحن: الطرد من 10 كغ فأكثر أجرته أعلى.'),
+                          helperMaxLines: 2,
+                        ),
+                        validator: (v) {
+                          final t = (v ?? '').trim();
+                          if (t.isEmpty) return null;
+                          final n = double.tryParse(t);
+                          return n == null || n < 0 || n > 1000
+                              ? context.tr('اكتب وزناً صحيحاً بالكيلو.')
+                              : null;
+                        },
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
