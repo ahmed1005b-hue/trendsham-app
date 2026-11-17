@@ -1792,5 +1792,14 @@
   "مركز الاستلام": "Teslim alma merkezi",
   "مركز التسليم": "Teslim merkezi",
   "وزن القطعة مع التغليف": "Ambalajla ürün ağırlığı",
-  "يصلك المندوب إلى عنوانك": "Kurye adresine getirir"
+  "يصلك المندوب إلى عنوانك": "Kurye adresine getirir",
+  "المنتج بانتظار موافقة الإدارة، ولن يظهر للزبائن قبلها.": "Bu ürün yönetici onayı bekliyor ve o zamana kadar müşterilere gösterilmeyecek.",
+  "بانتظار موافقة الإدارة": "Yönetici onayı bekleniyor",
+  "تم تحديث المنتج. حالته «مسودة» أو «غير نشط» فلا يظهر للزبائن.": "Ürün güncellendi. Durumu \"Taslak\" veya \"Pasif\" olduğu için müşteriler görmez.",
+  "تم تحديث المنتج، وسيظهر للزبائن بعد موافقة الإدارة.": "Ürün güncellendi. Yönetici onayından sonra müşterilere gösterilecek.",
+  "رفضت الإدارة هذا المنتج وأعادته مسودة: $_rejectionNote. عدّله ثم اجعل حالته «نشط» ليُراجع من جديد.": "Yönetici bu ürünü reddetti ve taslağa çevirdi: @{_rejectionNote}. Düzenle, sonra yeniden incelenmesi için durumunu \"Aktif\" yap.",
+  "ظاهر للزبائن": "Müşterilere görünür",
+  "غير نشط - لا يظهر للزبائن": "Pasif - müşterilerden gizli",
+  "مرفوض: ${product.rejectionNote}": "Reddedildi: @{product.rejectionNote}",
+  "مسودة - لا يظهر للزبائن": "Taslak - müşterilerden gizli"
 }

@@ -1792,5 +1792,14 @@
   "مركز الاستلام": "Pickup center",
   "مركز التسليم": "Drop-off center",
   "وزن القطعة مع التغليف": "Item weight with packaging",
-  "يصلك المندوب إلى عنوانك": "The courier brings it to your address"
+  "يصلك المندوب إلى عنوانك": "The courier brings it to your address",
+  "المنتج بانتظار موافقة الإدارة، ولن يظهر للزبائن قبلها.": "This product is awaiting admin approval and will not be shown to customers until then.",
+  "بانتظار موافقة الإدارة": "Awaiting admin approval",
+  "تم تحديث المنتج. حالته «مسودة» أو «غير نشط» فلا يظهر للزبائن.": "Product updated. Its status is \"Draft\" or \"Inactive\", so customers do not see it.",
+  "تم تحديث المنتج، وسيظهر للزبائن بعد موافقة الإدارة.": "Product updated. It will be shown to customers after admin approval.",
+  "رفضت الإدارة هذا المنتج وأعادته مسودة: $_rejectionNote. عدّله ثم اجعل حالته «نشط» ليُراجع من جديد.": "The admin rejected this product and returned it to draft: @{_rejectionNote}. Edit it, then set its status to \"Active\" to be reviewed again.",
+  "ظاهر للزبائن": "Visible to customers",
+  "غير نشط - لا يظهر للزبائن": "Inactive - hidden from customers",
+  "مرفوض: ${product.rejectionNote}": "Rejected: @{product.rejectionNote}",
+  "مسودة - لا يظهر للزبائن": "Draft - hidden from customers"
 }

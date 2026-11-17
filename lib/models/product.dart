@@ -109,6 +109,10 @@ class Product {
   /// وزن القطعة بالغرام (للشحن)، null إن لم يحدده البائع
   final int? weightGrams;
   final String? status;
+
+  /// للبائع صاحب المنتج فقط: هل وافقت الإدارة، وسبب الرفض إن رُفض
+  final bool? adminApproved;
+  final String? rejectionNote;
   final bool inStock;
   final double? averageRating;
   final int reviewsCount;
@@ -145,6 +149,8 @@ class Product {
     required this.stockQuantity,
     this.weightGrams,
     this.status,
+    this.adminApproved,
+    this.rejectionNote,
     required this.inStock,
     this.averageRating,
     required this.reviewsCount,
@@ -274,7 +280,10 @@ class Product {
       dealLabel: dealLabel ?? this.dealLabel,
       dealEndsAt: dealEndsAt ?? this.dealEndsAt,
       stockQuantity: stockQuantity ?? this.stockQuantity,
+      weightGrams: weightGrams,
       status: status ?? this.status,
+      adminApproved: adminApproved,
+      rejectionNote: rejectionNote,
       inStock: inStock ?? this.inStock,
       averageRating: averageRating ?? this.averageRating,
       reviewsCount: reviewsCount ?? this.reviewsCount,
@@ -355,6 +364,10 @@ class Product {
       stockQuantity: _toInt(json['stock_quantity']) ?? 0,
       weightGrams: _toInt(json['weight_grams']),
       status: json['status']?.toString(),
+      adminApproved: json['admin_approved'] is bool ? json['admin_approved'] as bool : null,
+      rejectionNote: (json['rejection_note']?.toString().trim().isEmpty ?? true)
+          ? null
+          : json['rejection_note'].toString(),
       inStock: json['in_stock'] == true || (_toInt(json['stock_quantity']) ?? 0) > 0,
       averageRating: parseNullableDouble(json['average_rating']),
       reviewsCount: _toInt(json['reviews_count']) ?? 0,

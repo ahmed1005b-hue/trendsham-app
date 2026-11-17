@@ -103,6 +103,12 @@ class _SellerProductFormScreenState extends State<SellerProductFormScreen> {
   }
 
   String _status = 'draft';
+  String _initialStatus = 'draft';
+  String? _rejectionNote;
+  bool _awaitingApproval = false;
+
+  static String? _validStatus(String? s) =>
+      const ['draft', 'active', 'inactive'].contains(s) ? s : null;
   final List<XFile> _newImages = [];
   List<ProductImage> _existingImages = [];
   ProductOptionsController? _options;
@@ -181,6 +187,11 @@ class _SellerProductFormScreenState extends State<SellerProductFormScreen> {
         text: p != null ? p.stockQuantity.toString() : '0');
     _lowStockController = TextEditingController(text: '5');
     _weightController = TextEditingController();
+    // نبدأ من حالة المنتج الفعلية: تعديل منتج نشط لا يحوّله إلى مسودة
+    _status = _validStatus(p?.status) ?? 'draft';
+    _initialStatus = _status;
+    _rejectionNote = p?.rejectionNote;
+    _awaitingApproval = p?.status == 'active' && p?.adminApproved == false;
     _selectedCategoryId = p?.category?.id;
     _existingImages = p?.images ?? [];
 
@@ -202,6 +213,15 @@ class _SellerProductFormScreenState extends State<SellerProductFormScreen> {
       if (widget.isEditing) {
         final full = await _productService.show(widget.product!.slug);
         _skuController.text = full.sku ?? '';
+        final fullStatus = _validStatus(full.status);
+        if (fullStatus != null) {
+          _status = fullStatus;
+          _initialStatus = fullStatus;
+        }
+        _rejectionNote = full.rejectionNote ?? _rejectionNote;
+        if (full.adminApproved != null) {
+          _awaitingApproval = full.status == 'active' && full.adminApproved == false;
+        }
         if (full.weightGrams != null) {
           _weightController.text = (full.weightGrams! / 1000)
               .toStringAsFixed(2)
@@ -463,9 +483,13 @@ class _SellerProductFormScreenState extends State<SellerProductFormScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: AppText(widget.isEditing
-                ? 'تم تحديث المنتج.'
-                : 'تم إنشاء المنتج، بانتظار موافقة الإدارة.')),
+            content: AppText(!widget.isEditing
+                ? 'تم إنشاء المنتج، بانتظار موافقة الإدارة.'
+                : _status == 'active' && _initialStatus != 'active'
+                    ? 'تم تحديث المنتج، وسيظهر للزبائن بعد موافقة الإدارة.'
+                    : _status == 'active'
+                        ? 'تم تحديث المنتج.'
+                        : 'تم تحديث المنتج. حالته «مسودة» أو «غير نشط» فلا يظهر للزبائن.')),
       );
       Navigator.of(context).pop(true);
     } on ApiException catch (e) {
@@ -621,6 +645,25 @@ class _SellerProductFormScreenState extends State<SellerProductFormScreen> {
                               borderRadius: BorderRadius.circular(8)),
                           child: AppText(_error!,
                               style: const TextStyle(color: AppColors.danger)),
+                        ),
+                      if (_rejectionNote != null || _awaitingApproval)
+                        Container(
+                          key: const ValueKey('product-review-state'),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                              color: context.softTint(_rejectionNote != null
+                                  ? Colors.red
+                                  : Colors.amber),
+                              borderRadius: BorderRadius.circular(8)),
+                          child: AppText(
+                              _rejectionNote != null
+                                  ? 'رفضت الإدارة هذا المنتج وأعادته مسودة: $_rejectionNote. عدّله ثم اجعل حالته «نشط» ليُراجع من جديد.'
+                                  : 'المنتج بانتظار موافقة الإدارة، ولن يظهر للزبائن قبلها.',
+                              style: TextStyle(
+                                  color: _rejectionNote != null
+                                      ? AppColors.danger
+                                      : const Color(0xFF7A5410))),
                         ),
                       const AppText('صور المنتج',
                           style: TextStyle(fontWeight: FontWeight.bold)),

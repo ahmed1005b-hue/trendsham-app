@@ -139,8 +139,14 @@ class _SellerProductsScreenState extends State<SellerProductsScreen> {
             ),
             title: AppText(product.name,
                 maxLines: 1, overflow: TextOverflow.ellipsis),
-            subtitle: AppText(
-                '${product.formattedPrice} • مخزون: ${product.stockQuantity}'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText(
+                    '${product.formattedPrice} • مخزون: ${product.stockQuantity}'),
+                _statusLine(product),
+              ],
+            ),
             onTap: () => _openEdit(product),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
@@ -163,6 +169,25 @@ class _SellerProductsScreenState extends State<SellerProductsScreen> {
         );
       },
     );
+  }
+
+  /// حالة المنتج وسببها: مسودة، غير نشط، بانتظار المراجعة، أو مرفوض مع السبب
+  Widget _statusLine(Product product) {
+    final (String text, Color color) = product.rejectionNote != null
+        ? ('مرفوض: ${product.rejectionNote}', AppColors.danger)
+        : switch (product.status) {
+            'draft' => ('مسودة - لا يظهر للزبائن', AppColors.muted),
+            'inactive' => ('غير نشط - لا يظهر للزبائن', AppColors.muted),
+            'active' when product.adminApproved == false => (
+                'بانتظار موافقة الإدارة',
+                const Color(0xFF9A7425)
+              ),
+            _ => ('ظاهر للزبائن', AppColors.emerald),
+          };
+    return AppText(text,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600));
   }
 
   Future<void> _openEdit(Product product) async {

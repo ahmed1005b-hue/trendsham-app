@@ -292,4 +292,29 @@ void main() {
     await tester.pumpAndSettle();
     expect(seller.updateCalls, 1);
   });
+  testWidgets('editing an active product keeps it active instead of draft',
+      (tester) async {
+    final seller = _FakeSellerService();
+    final active = _legacyProduct().copyWith(status: 'active');
+    await _pump(tester, seller, active);
+
+    await _save(tester);
+
+    expect(seller.updateCalls, 1);
+    expect(seller.updatedFields!['status'], 'active');
+  });
+
+  testWidgets('a rejected product shows the admin reason in the form',
+      (tester) async {
+    final rejected = Product.fromJson({
+      'id': 7, 'slug': 'shirt', 'name': 'قميص', 'price': 1000,
+      'stock_quantity': 4, 'status': 'draft', 'reviews_count': 0,
+      'admin_approved': false, 'rejection_note': 'الصور غير واضحة',
+      'category': {'id': 1, 'name': 'ملابس', 'slug': 'clothes'},
+    });
+    await _pump(tester, _FakeSellerService(), rejected);
+
+    expect(find.byKey(const ValueKey('product-review-state')), findsOneWidget);
+    expect(find.textContaining('الصور غير واضحة'), findsOneWidget);
+  });
 }
