@@ -1,6 +1,9 @@
 class ProductImage {
   final int id;
   final String url;
+
+  /// نسخة صغيرة (عرض 600) للبطاقات والقوائم؛ الصفحة والتكبير يستعملان [url]
+  final String? thumbUrl;
   final bool isPrimary;
   final String? color;
   final String? colorName;
@@ -10,6 +13,7 @@ class ProductImage {
     required this.id,
     required this.url,
     required this.isPrimary,
+    this.thumbUrl,
     this.color,
     this.colorName,
     this.colorHex,
@@ -19,12 +23,17 @@ class ProductImage {
     return ProductImage(
       id: (json['id'] as num?)?.toInt() ?? 0,
       url: (json['url'] ?? json['image_url'] ?? json['path'])?.toString() ?? '',
+      thumbUrl: json['thumb_url']?.toString(),
       isPrimary: json['is_primary'] as bool? ?? false,
       color: json['color'] ?? json['color_code'],
       colorName: json['color_name'],
       colorHex: json['color_hex']?.toString(),
     );
   }
+
+  /// الرابط المناسب للقوائم: الصغير إن وُجد، وإلا الأصلي
+  String get listUrl =>
+      (thumbUrl != null && thumbUrl!.isNotEmpty) ? thumbUrl! : url;
 }
 
 class Vendor {

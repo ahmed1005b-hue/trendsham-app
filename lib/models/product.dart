@@ -33,8 +33,8 @@ class ActiveDailyDeal {
 
     return ActiveDailyDeal(
       id: (json['id'] as num?)?.toInt(),
-      discountedPrice:
-          parsePrice(json['discounted_price']) ?? parsePrice(json['effective_price']),
+      discountedPrice: parsePrice(json['discounted_price']) ??
+          parsePrice(json['effective_price']),
       specialPrice: parsePrice(json['special_price']),
       discountPercentage: _toInt(json['discount_percentage']),
       endsAt: json['ends_at'] != null
@@ -80,8 +80,10 @@ class ProductVariant {
       colorHex: json['color_hex']?.toString(),
       size: json['size']?.toString(),
       sku: json['sku']?.toString(),
-      priceAdjustment: double.tryParse(json['price_adjustment']?.toString() ?? '0') ?? 0,
-      effectivePrice: double.tryParse(json['effective_price']?.toString() ?? '0') ?? 0,
+      priceAdjustment:
+          double.tryParse(json['price_adjustment']?.toString() ?? '0') ?? 0,
+      effectivePrice:
+          double.tryParse(json['effective_price']?.toString() ?? '0') ?? 0,
       stockQuantity: _toInt(json['stock_quantity']) ?? 0,
       isActive: json['is_active'] != false,
       label: json['label']?.toString() ?? '',
@@ -167,7 +169,9 @@ class Product {
   });
 
   bool get hasActiveDeal =>
-      displayPrice < price || ((dealDiscountPercentage ?? 0) > 0) || dealLabel != null;
+      displayPrice < price ||
+      ((dealDiscountPercentage ?? 0) > 0) ||
+      dealLabel != null;
 
   double get displayPrice => effectivePrice ?? dealDiscountedPrice ?? price;
 
@@ -184,7 +188,9 @@ class Product {
     if (explicit != null && explicit > 0) return explicit;
     final original = displayCompareAtPrice;
     if (original != null && original > 0 && displayPrice < original) {
-      return (((original - displayPrice) / original) * 100).round().clamp(1, 99);
+      return (((original - displayPrice) / original) * 100)
+          .round()
+          .clamp(1, 99);
     }
     return null;
   }
@@ -231,8 +237,6 @@ class Product {
     );
   }
 
-
-
   Product copyWith({
     int? id,
     String? slug,
@@ -274,9 +278,11 @@ class Product {
       compareAtPrice: compareAtPrice ?? this.compareAtPrice,
       discountPercentage: discountPercentage ?? this.discountPercentage,
       effectivePrice: effectivePrice ?? this.effectivePrice,
-      formattedEffectivePrice: formattedEffectivePrice ?? this.formattedEffectivePrice,
+      formattedEffectivePrice:
+          formattedEffectivePrice ?? this.formattedEffectivePrice,
       dealDiscountedPrice: dealDiscountedPrice ?? this.dealDiscountedPrice,
-      dealDiscountPercentage: dealDiscountPercentage ?? this.dealDiscountPercentage,
+      dealDiscountPercentage:
+          dealDiscountPercentage ?? this.dealDiscountPercentage,
       dealLabel: dealLabel ?? this.dealLabel,
       dealEndsAt: dealEndsAt ?? this.dealEndsAt,
       stockQuantity: stockQuantity ?? this.stockQuantity,
@@ -311,7 +317,8 @@ class Product {
     }
 
     ActiveDailyDeal? activeDeal;
-    final rawDeal = json['active_daily_deal'] ?? json['daily_deal'] ?? json['deal'];
+    final rawDeal =
+        json['active_daily_deal'] ?? json['daily_deal'] ?? json['deal'];
     if (rawDeal is Map) {
       activeDeal = ActiveDailyDeal.fromJson(Map<String, dynamic>.from(rawDeal));
     }
@@ -357,18 +364,22 @@ class Product {
       dealDiscountedPrice: activeDeal?.discountedPrice ?? effectivePrice,
       dealDiscountPercentage: discount,
       dealLabel: json['deal_label']?.toString() ??
-          ((effectivePrice != null && effectivePrice < price) || activeDeal != null
+          ((effectivePrice != null && effectivePrice < price) ||
+                  activeDeal != null
               ? 'عرض اليوم'
               : null),
       dealEndsAt: activeDeal?.endsAt,
       stockQuantity: _toInt(json['stock_quantity']) ?? 0,
       weightGrams: _toInt(json['weight_grams']),
       status: json['status']?.toString(),
-      adminApproved: json['admin_approved'] is bool ? json['admin_approved'] as bool : null,
+      adminApproved: json['admin_approved'] is bool
+          ? json['admin_approved'] as bool
+          : null,
       rejectionNote: (json['rejection_note']?.toString().trim().isEmpty ?? true)
           ? null
           : json['rejection_note'].toString(),
-      inStock: json['in_stock'] == true || (_toInt(json['stock_quantity']) ?? 0) > 0,
+      inStock:
+          json['in_stock'] == true || (_toInt(json['stock_quantity']) ?? 0) > 0,
       averageRating: parseNullableDouble(json['average_rating']),
       reviewsCount: _toInt(json['reviews_count']) ?? 0,
       category: json['category'] is Map
@@ -404,6 +415,7 @@ class Product {
           list.add(ProductImage(
             id: _toInt(map['id']) ?? i,
             url: url,
+            thumbUrl: map['thumb_url']?.toString(),
             isPrimary: map['is_primary'] as bool? ?? (i == 0),
             color: map['color']?.toString(),
             colorName: map['color_name']?.toString(),
