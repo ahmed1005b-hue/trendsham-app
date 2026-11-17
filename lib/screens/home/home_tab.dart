@@ -29,7 +29,9 @@ import '../../widgets/app_state_message.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/quick_view_bottom_sheet.dart';
 import '../../widgets/shimmer_loading.dart';
+import '../../services/recently_viewed_store.dart';
 import '../../widgets/showcase_section.dart';
+import '../../widgets/story_viewer.dart';
 import '../../widgets/brand_wordmark.dart';
 
 part 'home_tab_widgets.dart';
@@ -70,6 +72,7 @@ class _HomeTabState extends State<HomeTab> {
   List<Category>? _categories;
   List<StoryModel>? _stories;
   List<Product>? _dailyDealProducts;
+  List<Product> _recentProducts = const [];
   bool _dailyDealsLoading = false;
   String? _dailyDealsError;
   final Set<int> _favoriteIds = {};
@@ -98,7 +101,27 @@ class _HomeTabState extends State<HomeTab> {
   @override
   void initState() {
     super.initState();
+    RecentlyViewedStore.changes.addListener(_loadRecent);
     _load();
+  }
+
+  @override
+  void dispose() {
+    RecentlyViewedStore.changes.removeListener(_loadRecent);
+    super.dispose();
+  }
+
+  /// «شاهدته مؤخراً» من سجل الهاتف؛ قسم مساعد فلا نعرض خطأ إن فشل.
+  Future<void> _loadRecent() async {
+    try {
+      final ids = await RecentlyViewedStore.ids();
+      final products = ids.isEmpty
+          ? <Product>[]
+          : await _productService.byIds(ids.take(10).toList());
+      if (mounted) setState(() => _recentProducts = products);
+    } catch (e) {
+      debugPrint('recently viewed load failed: $e');
+    }
   }
 
   Future<void> _load() async {
@@ -108,6 +131,7 @@ class _HomeTabState extends State<HomeTab> {
       _loadStories(),
       _loadDailyDeals(),
       _loadShowcases(),
+      _loadRecent(),
     ]);
   }
 
@@ -341,6 +365,8 @@ class _HomeTabState extends State<HomeTab> {
                   _dailyDealsLoading ||
                   _dailyDealsError != null)
                 SliverToBoxAdapter(child: _buildDailyDealsSection()),
+              if (_recentProducts.isNotEmpty)
+                SliverToBoxAdapter(child: _buildRecentlyViewed()),
               for (final showcase in _showcases)
                 SliverToBoxAdapter(
                   child: ShowcaseSection(
@@ -626,11 +652,7 @@ class _HomeTabState extends State<HomeTab> {
     final stories = _stories ?? const <StoryModel>[];
     final index = stories.indexWhere((item) => item.id == story.id);
     if (index < 0) return;
-    showDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      builder: (_) => _StoryViewerDialog(stories: stories, initialIndex: index),
-    );
+    showStoryViewer(context, stories: stories, initialIndex: index);
   }
 
   Widget _buildSpotlight() {
@@ -1008,6 +1030,36 @@ class _HomeTabState extends State<HomeTab> {
     if (diff.inDays >= 1) return 'خلال ${diff.inDays} يوم';
     if (diff.inHours >= 1) return 'خلال ${diff.inHours} س';
     return 'خلال ${diff.inMinutes.clamp(1, 59)} د';
+  }
+
+  Widget _buildRecentlyViewed() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: _SectionHeading(
+            title: 'شاهدته مؤخراً',
+            icon: Icons.history_rounded,
+            actionLabel: 'مسح السجل',
+            onAction: RecentlyViewedStore.clear,
+          ),
+        ),
+        SizedBox(
+          height: 292,
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+            scrollDirection: Axis.horizontal,
+            itemCount: _recentProducts.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, index) => SizedBox(
+              width: 154,
+              child: _productCard(_recentProducts[index]),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildProductsHeading() {

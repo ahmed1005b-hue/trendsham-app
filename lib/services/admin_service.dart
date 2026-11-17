@@ -250,11 +250,13 @@ class AdminService {
   Future<void> createStory(
       {required XFile image,
       String? caption,
+      String? linkUrl,
       required int durationHours}) async {
     await _api.postMultipart(
       '/admin/stories',
       fields: {
         if (caption != null && caption.isNotEmpty) 'caption': caption,
+        if (linkUrl != null && linkUrl.isNotEmpty) 'link_url': linkUrl,
         'duration_hours': durationHours.toString(),
       },
       images: [image],

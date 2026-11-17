@@ -26,6 +26,14 @@ class ProductService {
     return (data['data'] as List).map((p) => Product.fromJson(p)).toList();
   }
 
+  /// منتجات بأرقامها وبنفس الترتيب («شاهدته مؤخراً»). المخفي منها لا يعود.
+  Future<List<Product>> byIds(List<int> ids) async {
+    if (ids.isEmpty) return [];
+    final data = await _api
+        .get('/products', withAuth: false, query: {'ids': ids.join(',')});
+    return (data['data'] as List).map((p) => Product.fromJson(p)).toList();
+  }
+
   Future<Product> show(String slug) async {
     final data = await _api.get('/products/$slug');
     return Product.fromJson(data['data'] ?? data);

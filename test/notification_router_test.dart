@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trendsham/models/notification.dart';
+import 'package:trendsham/screens/cart/cart_screen.dart';
 import 'package:trendsham/screens/coupons/my_coupons_screen.dart';
+import 'package:trendsham/screens/gift_cards/gift_cards_screen.dart';
+import 'package:trendsham/screens/loyalty/invite_friends_screen.dart';
 import 'package:trendsham/screens/loyalty/my_points_screen.dart';
 import 'package:trendsham/screens/messages/buyer_seller_messages_screen.dart';
 import 'package:trendsham/screens/notifications/notifications_screen.dart';
@@ -39,6 +42,9 @@ void main() {
     test('list screens ignore the id', () {
       expect(NotificationRouter.widgetFor('coupons', null), isA<MyCouponsScreen>());
       expect(NotificationRouter.widgetFor('points', null), isA<MyPointsScreen>());
+      expect(NotificationRouter.widgetFor('cart', null), isA<CartScreen>());
+      expect(NotificationRouter.widgetFor('referrals', null), isA<InviteFriendsScreen>());
+      expect(NotificationRouter.widgetFor('gift_cards', null), isA<GiftCardsScreen>());
       expect(NotificationRouter.widgetFor('seller_order', '7'), isA<SellerOrdersScreen>());
       expect(NotificationRouter.widgetFor('seller_wallet', null), isA<SellerWalletScreen>());
       expect(NotificationRouter.widgetFor('seller_products', null), isA<SellerProductsScreen>());

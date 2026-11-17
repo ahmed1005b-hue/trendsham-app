@@ -48,8 +48,10 @@ class StoryModel {
   final int id;
   final String image;
   final String? caption;
+  final String? linkUrl;
   final bool isFromPlatform;
   final String? vendorName;
+  final String? vendorLogo;
   final double? amountPaid;
   final bool isActive;
   final bool isExpired;
@@ -59,16 +61,30 @@ class StoryModel {
     required this.id,
     required this.image,
     this.caption,
+    this.linkUrl,
     required this.isFromPlatform,
     this.vendorName,
+    this.vendorLogo,
     this.amountPaid,
     required this.isActive,
     required this.isExpired,
     this.expiresAt,
   });
 
-  String get imageUrl {
-    if (image.isEmpty) return '';
+  /// زر «اكتشف الآن» يظهر فقط لرابط http/https صالح.
+  bool get hasLink {
+    final uri = Uri.tryParse(linkUrl ?? '');
+    return uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty;
+  }
+
+  String? get vendorLogoUrl =>
+      vendorLogo == null || vendorLogo!.isEmpty ? null : _resolve(vendorLogo!);
+
+  String get imageUrl => image.isEmpty ? '' : _resolve(image);
+
+  static String _resolve(String image) {
     final uri = Uri.tryParse(image);
     if (uri != null && uri.hasAuthority) {
       if (uri.host == 'localhost' || uri.host == '127.0.0.1') {
@@ -101,12 +117,14 @@ class StoryModel {
       image: (json['image'] ?? json['image_url'] ?? json['photo'] ?? '')
           .toString(),
       caption: json['caption']?.toString(),
+      linkUrl: json['link_url']?.toString(),
       isFromPlatform:
           json['is_from_platform'] == 1 || json['is_from_platform'] == true,
       vendorName: json['vendor_name'] ??
           json['store_name'] ??
           (vendor is Map ? vendor['store_name'] : null) ??
           'تريند شام',
+      vendorLogo: vendor is Map ? vendor['store_logo']?.toString() : null,
       amountPaid: json['amount_paid'] != null
           ? double.tryParse(json['amount_paid'].toString())
           : null,

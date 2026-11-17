@@ -31,6 +31,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _passwordConfirmController = TextEditingController();
   final _storeNameController = TextEditingController();
+  final _referralController = TextEditingController();
   final _codeController = TextEditingController();
   final _imagePicker = ImagePicker();
 
@@ -54,6 +55,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _passwordController.dispose();
     _passwordConfirmController.dispose();
     _storeNameController.dispose();
+    _referralController.dispose();
     _codeController.dispose();
     super.dispose();
   }
@@ -134,6 +136,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             passwordConfirmation: _passwordConfirmController.text,
             storeName: _accountType == 'seller'
                 ? _storeNameController.text.trim()
+                : null,
+            referralCode: _accountType == 'customer'
+                ? _referralController.text.trim()
                 : null,
           );
 
@@ -339,6 +344,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     .translate('العنوان (اختياري)')),
           ),
           const SizedBox(height: 16),
+          if (_accountType == 'customer') ...[
+            TextFormField(
+              controller: _referralController,
+              textCapitalization: TextCapitalization.characters,
+              decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)
+                      .translate('كود الدعوة (اختياري)'),
+                  helperText: AppLocalizations.of(context)
+                      .translate('إن دعاك صديق، تحصلان معاً على نقاط بعد أول طلب.')),
+            ),
+            const SizedBox(height: 16),
+          ],
           if (_accountType == 'seller') ...[
             TextFormField(
               controller: _storeNameController,

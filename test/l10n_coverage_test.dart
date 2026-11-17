@@ -24,6 +24,7 @@ const translatedPaths = <String>[
   'lib/screens/followed_stores',
   'lib/screens/coupons',
   'lib/screens/loyalty',
+  'lib/screens/gift_cards',
   'lib/screens/notifications',
   'lib/screens/auth',
   'lib/screens/store',

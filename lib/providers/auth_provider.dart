@@ -32,8 +32,29 @@ class AuthProvider extends ChangeNotifier {
 
   /// يعيد رسالة السيرفر إن وُجدت (إعادة تفعيل الحساب أو إلغاء طلب حذفه).
   Future<String?> login(String identifier, String password) async {
-    _user =
-        await _authService.login(identifier: identifier, password: password);
+    _user = await _authService.login(
+      identifier: identifier,
+      password: password,
+    );
+    notifyListeners();
+    _registerPush();
+    return _authService.lastLoginNotice;
+  }
+
+  /// الخطوة الثانية بعد TwoFactorRequired. يعيد رسالة السيرفر إن وُجدت.
+  Future<String?> completeTwoFactor(String challenge, String code) async {
+    _user = await _authService.completeTwoFactor(
+      challenge: challenge,
+      code: code,
+    );
+    notifyListeners();
+    _registerPush();
+    return _authService.lastLoginNotice;
+  }
+
+  /// دخول العميل برمز Google/Facebook. يعيد رسالة السيرفر إن وُجدت.
+  Future<String?> socialLogin(String provider, String token) async {
+    _user = await _authService.socialLogin(provider: provider, token: token);
     notifyListeners();
     _registerPush();
     return _authService.lastLoginNotice;
@@ -49,6 +70,7 @@ class AuthProvider extends ChangeNotifier {
     required String password,
     required String passwordConfirmation,
     String? storeName,
+    String? referralCode,
   }) async {
     await _authService.register(
       accountType: accountType,
@@ -60,11 +82,15 @@ class AuthProvider extends ChangeNotifier {
       password: password,
       passwordConfirmation: passwordConfirmation,
       storeName: storeName,
+      referralCode: referralCode,
     );
   }
 
-  Future<bool> verifyRegistration(String phone, String code,
-      {XFile? identityDocument}) async {
+  Future<bool> verifyRegistration(
+    String phone,
+    String code, {
+    XFile? identityDocument,
+  }) async {
     final user = await _authService.verifyRegistration(
       phone: phone,
       code: code,

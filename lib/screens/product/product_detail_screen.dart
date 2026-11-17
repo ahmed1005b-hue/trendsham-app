@@ -13,6 +13,7 @@ import '../../config/theme.dart';
 import '../../models/product.dart';
 import '../../models/product_review.dart';
 import '../../services/product_service.dart';
+import '../../services/recently_viewed_store.dart';
 import '../../services/api_exception.dart';
 import '../../services/profile_and_notifications_service.dart';
 import '../../providers/auth_provider.dart';
@@ -131,6 +132,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     setState(() => _error = null);
     try {
       final product = await _productService.show(widget.slug);
+      RecentlyViewedStore.add(product.id);
       if (!mounted) return;
       setState(() {
         _product = product;

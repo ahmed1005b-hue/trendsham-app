@@ -77,6 +77,7 @@ class _SellerStoriesScreenState extends State<SellerStoriesScreen> {
 
     XFile? pickedImage;
     final captionController = TextEditingController();
+    final linkController = TextEditingController();
 
     await showDialog(
       context: context,
@@ -135,6 +136,21 @@ class _SellerStoriesScreenState extends State<SellerStoriesScreen> {
                           .translate('نص مختصر (اختياري)')),
                   maxLength: 150,
                 ),
+                const SizedBox(height: 8),
+                TextField(
+                  key: const ValueKey('story-link-field'),
+                  controller: linkController,
+                  keyboardType: TextInputType.url,
+                  textDirection: TextDirection.ltr,
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)
+                        .translate('رابط الزر داخل الستوري (اختياري)'),
+                    hintText: 'https://',
+                    helperText: AppLocalizations.of(context).translate(
+                        'انسخ رابط المنتج أو المتجر أو أي صفحة، وسيظهر للعميل زر «اكتشف الآن» يفتحه.'),
+                    helperMaxLines: 3,
+                  ),
+                ),
               ],
             ),
           ),
@@ -149,7 +165,8 @@ class _SellerStoriesScreenState extends State<SellerStoriesScreen> {
                 try {
                   await _service.createStory(
                       image: pickedImage!,
-                      caption: captionController.text.trim());
+                      caption: captionController.text.trim(),
+                      linkUrl: linkController.text.trim());
                   if (ctx.mounted) Navigator.pop(ctx);
                   _load();
                   if (mounted) {
@@ -182,7 +199,8 @@ class _SellerStoriesScreenState extends State<SellerStoriesScreen> {
           if (_data != null)
             IconButton(
                 tooltip: context.tr('إضافة قصة'),
-                icon: const Icon(Icons.add), onPressed: _showCreateDialog),
+                icon: const Icon(Icons.add),
+                onPressed: _showCreateDialog),
         ],
       ),
       body: RefreshIndicator(

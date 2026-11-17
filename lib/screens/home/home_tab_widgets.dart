@@ -132,157 +132,6 @@ class _SectionHeading extends StatelessWidget {
   }
 }
 
-class _StoryViewerDialog extends StatefulWidget {
-  const _StoryViewerDialog({
-    required this.stories,
-    required this.initialIndex,
-  });
-
-  final List<StoryModel> stories;
-  final int initialIndex;
-
-  @override
-  State<_StoryViewerDialog> createState() => _StoryViewerDialogState();
-}
-
-class _StoryViewerDialogState extends State<_StoryViewerDialog> {
-  static const _storyDuration = Duration(seconds: 10);
-  late int _currentIndex;
-  Timer? _timer;
-
-  StoryModel get _currentStory => widget.stories[_currentIndex];
-
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialIndex;
-    _startTimer();
-  }
-
-  void _startTimer() {
-    _timer?.cancel();
-    _timer = Timer(_storyDuration, () {
-      if (!mounted) return;
-      if (_currentIndex + 1 >= widget.stories.length) {
-        Navigator.of(context).pop();
-        return;
-      }
-      setState(() => _currentIndex++);
-      _startTimer();
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final story = _currentStory;
-    return Dialog(
-      backgroundColor: Colors.black,
-      insetPadding: const EdgeInsets.all(12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: CachedNetworkImage(
-                imageUrl: story.imageUrl,
-                fit: BoxFit.contain,
-                placeholder: (_, __) => const Center(
-                  child: CircularProgressIndicator(color: AppColors.brandGreen),
-                ),
-                errorWidget: (_, __, ___) => const Center(
-                  child:
-                      Icon(Icons.broken_image, color: Colors.white54, size: 48),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 8,
-              left: 12,
-              right: 12,
-              child: TweenAnimationBuilder<double>(
-                key: ValueKey(story.id),
-                tween: Tween(begin: 0, end: 1),
-                duration: _storyDuration,
-                builder: (context, progress, _) => LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 3,
-                  backgroundColor: Colors.white38,
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 20,
-              left: 12,
-              right: 12,
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: AppColors.brandGreen,
-                    child: AppText(
-                      (story.vendorName ?? 'ق')[0],
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  AppText(
-                    story.vendorName ?? 'ترند شام',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    tooltip: context.tr('إغلاق'),
-                    icon:
-                        const Icon(Icons.close, color: Colors.white, size: 28),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            ),
-            if (story.caption != null && story.caption!.isNotEmpty)
-              Positioned(
-                bottom: 20,
-                left: 16,
-                right: 16,
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: AppText(
-                    story.caption!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      height: 1.3,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// فقاعة قسم مطابقة لـ .ts-catbub في الويب: قرص دائري بثلاثة ألوان متناوبة
 /// (أخضر / ذهبي / بيج) مع أيقونة أو أول حرف، وتحته الاسم في سطر واحد.
 class _CategoryBubble extends StatelessWidget {
@@ -305,14 +154,34 @@ class _CategoryBubble extends StatelessWidget {
     const darkGold = Color(0xFFE0B45A); // --tsd-gold
     final (Color bg, Color fg, Color ring) = switch (variant) {
       1 => dark
-          ? (darkGold.withValues(alpha: .12), darkGold, darkGold.withValues(alpha: .25))
-          : (AppColors.goldSoft, AppColors.goldInk, AppColors.gold.withValues(alpha: .25)),
+          ? (
+              darkGold.withValues(alpha: .12),
+              darkGold,
+              darkGold.withValues(alpha: .25)
+            )
+          : (
+              AppColors.goldSoft,
+              AppColors.goldInk,
+              AppColors.gold.withValues(alpha: .25)
+            ),
       2 => dark
-          ? (const Color(0xFF262F2A), const Color(0xFFE8ECE9), const Color(0xFF2E3833))
+          ? (
+              const Color(0xFF262F2A),
+              const Color(0xFFE8ECE9),
+              const Color(0xFF2E3833)
+            )
           : (const Color(0xFFF4EEE2), AppColors.brandGreen, AppColors.border),
       _ => dark
-          ? (accent.withValues(alpha: .12), accent, accent.withValues(alpha: .2))
-          : (const Color(0xFFE5F1EC), AppColors.brandGreen, AppColors.brandGreen.withValues(alpha: .12)),
+          ? (
+              accent.withValues(alpha: .12),
+              accent,
+              accent.withValues(alpha: .2)
+            )
+          : (
+              const Color(0xFFE5F1EC),
+              AppColors.brandGreen,
+              AppColors.brandGreen.withValues(alpha: .12)
+            ),
     };
     final initial = name.trim().isEmpty ? '؟' : name.trim().characters.first;
 

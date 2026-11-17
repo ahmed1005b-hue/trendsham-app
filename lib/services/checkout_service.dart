@@ -30,6 +30,9 @@ class CheckoutSummary {
   /// نقاط الولاء: الرصيد وأقصى ما يُستخدم وكم سيكسب
   final CheckoutLoyalty? loyalty;
 
+  /// رصيد بطاقات الهدايا المتاح (بالليرة)
+  final double giftBalance;
+
   const CheckoutSummary({
     required this.subtotal,
     required this.shippingFee,
@@ -44,6 +47,7 @@ class CheckoutSummary {
     this.couponOptions = const [],
     this.couponDroppedReason,
     this.loyalty,
+    this.giftBalance = 0,
   });
 
   factory CheckoutSummary.fromJson(Map<String, dynamic> json) {
@@ -73,6 +77,7 @@ class CheckoutSummary {
       loyalty: json['loyalty'] is Map
           ? CheckoutLoyalty.fromJson(Map<String, dynamic>.from(json['loyalty']))
           : null,
+      giftBalance: d(json['gift_balance']),
     );
   }
 }
@@ -97,6 +102,7 @@ class CheckoutService {
     required String paymentMethod,
     int? couponId,
     int usePoints = 0,
+    bool useGiftBalance = false,
   }) async {
     final data = await _api.post('/checkout', body: {
       'shipping_name': shippingName,
@@ -107,6 +113,8 @@ class CheckoutService {
       if (couponId != null) 'customer_coupon_id': couponId,
       // نقاط الولاء كخصم (يُعاد التحقق والقص في الخادم)
       if (usePoints > 0) 'use_points': usePoints,
+      // رصيد بطاقات الهدايا يغطي ما تبقّى (يُحسب في الخادم)
+      if (useGiftBalance) 'use_gift_balance': true,
     });
 
     return Order.fromJson(data['data'] ?? data);

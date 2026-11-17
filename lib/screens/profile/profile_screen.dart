@@ -17,6 +17,8 @@ import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
 import 'saved_cards_screen.dart';
 import '../coupons/my_coupons_screen.dart';
+import '../gift_cards/gift_cards_screen.dart';
+import '../loyalty/invite_friends_screen.dart';
 import '../loyalty/my_points_screen.dart';
 import '../returns/returns_screen.dart';
 import '../messages/buyer_seller_messages_screen.dart';
@@ -157,6 +159,30 @@ class ProfileScreen extends StatelessWidget {
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => const MyPointsScreen(),
+                            ),
+                          ),
+                        ),
+                        _buildDivider(context),
+                        _buildListTile(
+                          context,
+                          icon: Icons.card_giftcard_rounded,
+                          iconColor: const Color(0xFFC9962C),
+                          title: 'دعوة صديق',
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const InviteFriendsScreen(),
+                            ),
+                          ),
+                        ),
+                        _buildDivider(context),
+                        _buildListTile(
+                          context,
+                          icon: Icons.redeem_rounded,
+                          iconColor: AppColors.emerald,
+                          title: 'بطاقات الهدايا',
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const GiftCardsScreen(),
                             ),
                           ),
                         ),

@@ -55,6 +55,7 @@ class _AdminStoriesScreenState extends State<AdminStoriesScreen> {
   Future<void> _showCreateDialog() async {
     XFile? pickedImage;
     final captionController = TextEditingController();
+    final linkController = TextEditingController();
     final durationController = TextEditingController(text: '24');
 
     await showDialog(
@@ -101,6 +102,21 @@ class _AdminStoriesScreenState extends State<AdminStoriesScreen> {
                 ),
                 const SizedBox(height: 8),
                 TextField(
+                  key: const ValueKey('story-link-field'),
+                  controller: linkController,
+                  keyboardType: TextInputType.url,
+                  textDirection: TextDirection.ltr,
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)
+                        .translate('رابط الزر داخل الستوري (اختياري)'),
+                    hintText: 'https://',
+                    helperText: AppLocalizations.of(context).translate(
+                        'انسخ رابط المنتج أو المتجر أو أي صفحة، وسيظهر للعميل زر «اكتشف الآن» يفتحه.'),
+                    helperMaxLines: 3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
                   controller: durationController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
@@ -123,6 +139,7 @@ class _AdminStoriesScreenState extends State<AdminStoriesScreen> {
                   await _service.createStory(
                       image: pickedImage!,
                       caption: captionController.text.trim(),
+                      linkUrl: linkController.text.trim(),
                       durationHours: duration);
                   if (ctx.mounted) Navigator.pop(ctx);
                   _load();
@@ -147,7 +164,10 @@ class _AdminStoriesScreenState extends State<AdminStoriesScreen> {
       appBar: AppBar(
         title: const AppText('الستوري'),
         actions: [
-          IconButton(tooltip: context.tr('إضافة قصة'), icon: const Icon(Icons.add), onPressed: _showCreateDialog)
+          IconButton(
+              tooltip: context.tr('إضافة قصة'),
+              icon: const Icon(Icons.add),
+              onPressed: _showCreateDialog)
         ],
       ),
       body: RefreshIndicator(

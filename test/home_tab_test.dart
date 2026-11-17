@@ -15,6 +15,7 @@ import 'package:trendsham/widgets/showcase_section.dart';
 import 'package:trendsham/screens/category/category_products_screen.dart';
 import 'package:trendsham/screens/home/home_tab.dart';
 import 'package:trendsham/theme/theme_switcher.dart';
+import 'package:trendsham/services/recently_viewed_store.dart';
 import 'package:trendsham/widgets/brand_wordmark.dart';
 
 class _FakeProductService extends ProductService {
@@ -45,6 +46,10 @@ class _FakeProductService extends ProductService {
 
   @override
   Future<List<Product>> dailyDeals() async => [_saleProduct];
+
+  @override
+  Future<List<Product>> byIds(List<int> ids) async =>
+      ids.contains(1) ? [_saleProduct] : [];
 
   @override
   Future<({List<Product> products, int currentPage, int lastPage})> search(
@@ -124,12 +129,13 @@ void main() {
     Size viewport = const Size(360, 800),
     ThemeData? theme,
     ShowcaseService? showcases,
+    Map<String, Object> prefsValues = const {},
   }) async {
     tester.view.physicalSize = viewport;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues(prefsValues);
     final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(
       ChangeNotifierProvider(
@@ -170,13 +176,34 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('recently viewed products show on home and can be cleared',
+      (tester) async {
+    await pumpHome(tester, _FakeCategoryService(), prefsValues: {
+      'trendsham_recently_viewed': ['1', '99'],
+    });
+
+    expect(find.text('شاهدته مؤخراً'), findsOneWidget);
+    await tester.ensureVisible(find.text('مسح السجل'));
+    await tester.tap(find.text('مسح السجل'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('شاهدته مؤخراً'), findsNothing);
+    expect(await RecentlyViewedStore.ids(), isEmpty);
+  });
+
+  testWidgets('no recently viewed section without history', (tester) async {
+    await pumpHome(tester, _FakeCategoryService());
+    expect(find.text('شاهدته مؤخراً'), findsNothing);
+  });
+
   testWidgets('home renders offer prices and newest products from API data',
       (tester) async {
     await pumpHome(tester, _FakeCategoryService());
 
     expect(find.textContaining('25000'), findsWidgets);
     expect(find.bySemanticsLabel('تريندشام'), findsOneWidget);
-    expect(find.byType(BrandWordmark), findsOneWidget); // الشعار نصي كالويب (لا صورة)
+    expect(find.byType(BrandWordmark),
+        findsOneWidget); // الشعار نصي كالويب (لا صورة)
     final spotlightLabel = tester.widget<Text>(find.text('تخفيضات مختارة'));
     expect(
       contrastRatio(spotlightLabel.style!.color!, AppColors.gold),

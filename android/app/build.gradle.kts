@@ -1,3 +1,14 @@
+import java.util.Properties
+
+// مفاتيح Facebook تُقرأ من android/local.properties (لا يُرفع إلى git).
+// غيابها = زر Facebook مخفي والتطبيق يعمل عادياً.
+val localProps = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val facebookAppId: String = localProps.getProperty("facebook.appId", "")
+val facebookClientToken: String = localProps.getProperty("facebook.clientToken", "")
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -29,6 +40,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        resValue("string", "facebook_app_id", facebookAppId.ifEmpty { "0" })
+        resValue("string", "facebook_client_token", facebookClientToken.ifEmpty { "0" })
+        resValue("string", "fb_login_protocol_scheme", "fb" + facebookAppId.ifEmpty { "0" })
     }
 
     buildTypes {

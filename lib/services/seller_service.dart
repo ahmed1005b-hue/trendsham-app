@@ -439,11 +439,13 @@ class SellerService {
     };
   }
 
-  Future<void> createStory({required XFile image, String? caption}) async {
+  Future<void> createStory(
+      {required XFile image, String? caption, String? linkUrl}) async {
     await _api.postMultipart(
       '/seller/stories',
       fields: {
         if (caption != null && caption.isNotEmpty) 'caption': caption,
+        if (linkUrl != null && linkUrl.isNotEmpty) 'link_url': linkUrl,
       },
       images: [image],
       imageParamName: 'image',

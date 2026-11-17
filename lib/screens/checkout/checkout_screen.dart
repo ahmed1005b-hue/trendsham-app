@@ -52,6 +52,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   /// استخدام نقاط الولاء (أقصى ما تسمح به السلة)
   bool _usePoints = false;
+  bool _useGiftBalance = true;
 
   int get _pointsToUse {
     final l = _summary?.loyalty;
@@ -217,13 +218,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         paymentMethod: _paymentMethod,
         couponId: _couponChoice,
         usePoints: _pointsToUse,
+        useGiftBalance: _useGiftBalance && (_summary?.giftBalance ?? 0) > 0,
       );
 
       if (!mounted) return;
       context.read<CartProvider>().clear();
 
-      if (_paymentMethod != 'card') {
-        // الدفع عند الاستلام/المحفظة: لا نفتح أي صفحة بنك
+      if (_paymentMethod != 'card' || order.total <= 0) {
+        // الدفع عند الاستلام/المحفظة، أو طلب غطّاه رصيد الهدايا: لا نفتح أي صفحة بنك
         await _showInfo(
             title: 'تم إنشاء الطلب',
             message: 'تم استلام طلبك وسنؤكده قريباً.',
@@ -589,6 +591,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 if (loyalty != null && loyalty.enabled && loyalty.balance > 0)
                   const SizedBox(height: 12),
+                if ((_summary?.giftBalance ?? 0) > 0) ...[
+                  Card(
+                    child: SwitchListTile(
+                      value: _useGiftBalance,
+                      onChanged: (v) => setState(() => _useGiftBalance = v),
+                      secondary: const Icon(Icons.card_giftcard_rounded,
+                          color: AppColors.emerald),
+                      title: AppText(
+                          'ادفع من رصيد الهدايا (${_summary!.giftBalance.toStringAsFixed(0)} $currency)',
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const AppText(
+                        'يُخصم من الإجمالي عند تأكيد الطلب، والباقي بطريقة الدفع التي اخترتها.',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),

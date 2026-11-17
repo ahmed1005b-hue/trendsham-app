@@ -15,6 +15,7 @@ import '../../widgets/attribution_metrics_card.dart';
 import '../../widgets/product_card.dart';
 import 'seller_stories_screen.dart';
 import 'seller_daily_deals_screen.dart';
+import 'seller_coupons_screen.dart';
 import 'seller_products_screen.dart';
 import 'seller_orders_screen.dart';
 import 'seller_wallet_screen.dart';
@@ -71,8 +72,8 @@ class _SellerDashboardTabState extends State<SellerDashboardTab> {
   }
 
   Future<void> _openReturns() async {
-    await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const SellerReturnsScreen()));
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const SellerReturnsScreen()));
     if (mounted) _loadRequestedReturns();
   }
 
@@ -418,6 +419,15 @@ class _SellerDashboardTabState extends State<SellerDashboardTab> {
               subtitle: 'نشر ستوري ترويجية',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const SellerStoriesScreen()),
+              ),
+            ),
+            _quickTile(
+              context,
+              icon: Icons.confirmation_number_outlined,
+              title: 'الكوبونات',
+              subtitle: 'كوبونات خصم لمتجرك',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SellerCouponsScreen()),
               ),
             ),
             _quickTile(

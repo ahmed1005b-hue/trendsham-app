@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../screens/cart/cart_screen.dart';
 import '../screens/coupons/my_coupons_screen.dart';
+import '../screens/gift_cards/gift_cards_screen.dart';
+import '../screens/loyalty/invite_friends_screen.dart';
 import '../screens/loyalty/my_points_screen.dart';
 import '../screens/messages/buyer_seller_messages_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
@@ -46,6 +49,12 @@ class NotificationRouter {
         return const MyCouponsScreen();
       case 'points':
         return const MyPointsScreen();
+      case 'cart':
+        return const CartScreen();
+      case 'referrals':
+        return const InviteFriendsScreen();
+      case 'gift_cards':
+        return const GiftCardsScreen();
       case 'return':
         if (intId != null) return ReturnDetailScreen(returnId: intId);
         break;
