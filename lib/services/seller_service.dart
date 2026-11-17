@@ -412,8 +412,13 @@ class SellerService {
         .toList();
   }
 
-  Future<void> updateOrderStatus(int orderId, String status) async {
-    await _api.put('/seller/orders/$orderId/status', body: {'status': status});
+  Future<void> updateOrderStatus(int orderId, String status,
+      {String? trackingNumber}) async {
+    await _api.put('/seller/orders/$orderId/status', body: {
+      'status': status,
+      if (trackingNumber != null && trackingNumber.isNotEmpty)
+        'tracking_number': trackingNumber,
+    });
   }
 
   // ===== الستوري =====

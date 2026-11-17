@@ -1801,5 +1801,14 @@
   "ظاهر للزبائن": "Müşterilere görünür",
   "غير نشط - لا يظهر للزبائن": "Pasif - müşterilerden gizli",
   "مرفوض: ${product.rejectionNote}": "Reddedildi: @{product.rejectionNote}",
-  "مسودة - لا يظهر للزبائن": "Taslak - müşterilerden gizli"
+  "مسودة - لا يظهر للزبائن": "Taslak - müşterilerden gizli",
+  "أُعيد لك ${shipment.refundAmount.toStringAsFixed(0)} ل.س عن هذا الطرد.": "Bu paket için sana @{shipment.refundAmount.toStringAsFixed(0)} SYP iade edildi.",
+  "أُلغي طرد هذا المتجر وأُرجعت منتجاته، وبقية الطلب مستمرة.": "Bu mağazanın paketi iptal edildi ve ürünleri geri alındı; siparişin geri kalanı devam ediyor.",
+  "إلغاء طرد هذا المتجر فقط؟ بقية الطلب تستمر.": "Yalnızca bu mağazanın paketi iptal edilsin mi? Siparişin geri kalanı devam eder.",
+  "إلغاء هذا الطرد": "Bu paketi iptal et",
+  "رقم التتبع من شركة الشحن (عند الشحن)": "Kargo şirketinin takip numarası (kargolanınca)",
+  "شُحن جزئياً": "Kısmen kargolandı",
+  "طردك: ${Shipment.statusLabels[item.parcelStatus] ?? item.parcelStatus}": "Paketin: @{Shipment.statusLabels[item.parcelStatus] ?? item.parcelStatus}",
+  "طرود الطلب": "Sipariş paketleri",
+  "طلبك من ${order.shipments.length} متاجر، وكل متجر يرسل طرده وحده.": "Siparişin @{order.shipments.length} mağazadan ve her mağaza kendi paketini gönderir."
 }

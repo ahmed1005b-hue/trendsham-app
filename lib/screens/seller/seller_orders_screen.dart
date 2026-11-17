@@ -62,8 +62,39 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
       );
       if (ok != true) return;
     }
+    // عند الشحن: رقم التتبع من شركة الشحن (اختياري) ليتابع العميل طرده
+    String? tracking;
+    if (newStatus == 'shipped') {
+      if (!mounted) return;
+      final controller = TextEditingController();
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const AppText('تم الشحن'),
+          content: TextField(
+            key: const ValueKey('tracking-number'),
+            controller: controller,
+            textDirection: TextDirection.ltr,
+            decoration: InputDecoration(
+                labelText: ctx.tr('رقم التتبع من شركة الشحن (عند الشحن)')),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const AppText('تراجع')),
+            FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const AppText('حفظ')),
+          ],
+        ),
+      );
+      tracking = controller.text.trim();
+      controller.dispose();
+      if (ok != true) return;
+    }
     try {
-      await _service.updateOrderStatus(orderId, newStatus);
+      await _service.updateOrderStatus(orderId, newStatus,
+          trackingNumber: tracking);
       _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -155,7 +186,9 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: AppText(
-                        'الحالة: ${Order.statusLabels[item.orderStatus] ?? item.orderStatus ?? ''}',
+                        item.parcelStatus != null
+                            ? 'طردك: ${Shipment.statusLabels[item.parcelStatus] ?? item.parcelStatus}'
+                            : 'الحالة: ${Order.statusLabels[item.orderStatus] ?? item.orderStatus ?? ''}',
                         style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -164,10 +197,8 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                     ),
                     if (_nextFor(item).isEmpty)
                       AppText(
-                        (item.nextStatuses != null &&
-                                item.orderStatus != 'delivered' &&
-                                item.orderStatus != 'cancelled')
-                            ? 'طلب مشترك تديره الإدارة'
+                        (item.trackingNumber ?? '').isNotEmpty
+                            ? 'رقم التتبع: ${item.trackingNumber}'
                             : '',
                         style: const TextStyle(
                             fontSize: 11, color: AppColors.muted),
@@ -182,7 +213,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                             PopupMenuItem(
                               value: s,
                               child: AppText(
-                                  'تغيير إلى: ${Order.statusLabels[s] ?? s}'),
+                                  'تغيير إلى: ${Shipment.statusLabels[s] ?? Order.statusLabels[s] ?? s}'),
                             ),
                         ],
                         child: Container(

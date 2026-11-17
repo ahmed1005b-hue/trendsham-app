@@ -24,6 +24,9 @@ class OrderItem {
   final int? productId;
   final String productName;
   final String? vendorName;
+
+  /// متجر البند (لربطه بطرد متجره في الطلب)
+  final int? vendorId;
   final String? orderNumber;
   final String? orderStatus;
   final double unitPrice;
@@ -44,14 +47,19 @@ class OrderItem {
   /// رقم الطلب (في قائمة طلبات البائع؛ id هو رقم المنتج داخل الطلب)
   final int? orderId;
 
-  /// الحالات التي يسمح الخادم للبائع بنقل الطلب إليها الآن
+  /// الحالات التي يسمح الخادم للبائع بنقل طرده إليها الآن
   final List<String>? nextStatuses;
+
+  /// في قائمة طلبات البائع: حالة طرده (جزء الطلب الخاص بمتجره) ورقم تتبعه
+  final String? parcelStatus;
+  final String? trackingNumber;
 
   OrderItem({
     required this.id,
     this.productId,
     required this.productName,
     this.vendorName,
+    this.vendorId,
     this.orderNumber,
     this.orderStatus,
     required this.unitPrice,
@@ -65,6 +73,8 @@ class OrderItem {
     this.isGift = false,
     this.orderId,
     this.nextStatuses,
+    this.parcelStatus,
+    this.trackingNumber,
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
@@ -75,6 +85,7 @@ class OrderItem {
       productName: json['product_name']?.toString() ?? '',
       isGift: _toBool(json['is_gift']),
       vendorName: json['vendor_name']?.toString(),
+      vendorId: _toInt(json['vendor_id']),
       orderNumber: json['order_number']?.toString(),
       orderStatus: json['order_status']?.toString(),
       unitPrice: _toDouble(json['unit_price']),
@@ -90,6 +101,8 @@ class OrderItem {
       nextStatuses: json['next_statuses'] is List
           ? (json['next_statuses'] as List).map((e) => e.toString()).toList()
           : null,
+      parcelStatus: json['parcel_status']?.toString(),
+      trackingNumber: json['tracking_number']?.toString(),
     );
   }
 }
@@ -104,6 +117,13 @@ class Shipment {
   final DateTime? shippedAt;
   final DateTime? deliveredAt;
 
+  /// العميل يلغي طرد هذا المتجر وحده ما دام «قيد المراجعة»
+  final bool canBeCancelled;
+
+  /// ما أُعيد للعميل عند إلغاء الطرد (ليرة)
+  final double refundAmount;
+  final bool refused;
+
   Shipment({
     this.id,
     this.sellerProfileId,
@@ -113,10 +133,17 @@ class Shipment {
     this.shippingCompany,
     this.shippedAt,
     this.deliveredAt,
+    this.canBeCancelled = false,
+    this.refundAmount = 0,
+    this.refused = false,
   });
 
+  bool get isOpen => status != 'cancelled' && status != 'returned';
+
   static const Map<String, String> statusLabels = {
-    'pending': 'بانتظار الشحن',
+    'pending': 'قيد المراجعة',
+    'processing': 'قيد التجهيز',
+    'cancelled': 'ملغي',
     'shipped': 'تم الشحن',
     'in_transit': 'في الطريق',
     'delivered': 'تم التسليم',
@@ -131,6 +158,9 @@ class Shipment {
       sellerProfileId: _toInt(json['seller_profile_id']),
       sellerName: json['seller_name']?.toString(),
       status: json['status']?.toString() ?? 'pending',
+      canBeCancelled: _toBool(json['can_be_cancelled']),
+      refundAmount: _toDouble(json['refund_amount']),
+      refused: _toBool(json['refused']),
       trackingNumber: json['tracking_number']?.toString(),
       shippingCompany: json['shipping_company']?.toString(),
       shippedAt: json['shipped_at'] != null
@@ -208,6 +238,14 @@ class Order {
   };
 
   String get statusLabel => statusLabels[status] ?? status;
+
+  /// طلب من عدة متاجر وصل بعض طروده للشحن وبعضها لم يُشحن بعد
+  bool get isPartiallyShipped {
+    final open = shipments.where((s) => s.isOpen).toList();
+    bool shipped(Shipment s) =>
+        ['shipped', 'in_transit', 'delivered'].contains(s.status);
+    return open.length > 1 && open.any(shipped) && !open.every(shipped);
+  }
 
   int get effectiveItemsCount {
     if (items.isNotEmpty) return items.length;

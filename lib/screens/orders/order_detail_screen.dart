@@ -252,6 +252,42 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
+  Future<void> _cancelParcel(Shipment parcel) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const AppText('إلغاء هذا الطرد'),
+        content: const AppText('إلغاء طرد هذا المتجر فقط؟ بقية الطلب تستمر.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const AppText('تراجع')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const AppText('نعم، ألغِ')),
+        ],
+      ),
+    );
+    if (confirmed != true || parcel.id == null) return;
+
+    setState(() => _isCancelling = true);
+    try {
+      final order = await _orderService.cancelParcel(widget.orderId, parcel.id!);
+      setState(() => _order = order);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: AppText(
+              'أُلغي طرد هذا المتجر وأُرجعت منتجاته، وبقية الطلب مستمرة.')));
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: AppText(e.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _isCancelling = false);
+    }
+  }
+
   Future<void> _showReviewDialog(int orderItemId, String productName) async {
     int rating = 5;
     final commentController = TextEditingController();
@@ -533,19 +569,53 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const AppText('الشحن',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    AppText(
+                        order.shipments.length > 1 ? 'طرود الطلب' : 'الشحن',
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    if (order.shipments.length > 1)
+                      AppText(
+                          'طلبك من ${order.shipments.length} متاجر، وكل متجر يرسل طرده وحده.',
+                          style: const TextStyle(
+                              color: AppColors.muted, fontSize: 12)),
                     const SizedBox(height: 8),
                     ...order.shipments.map((shipment) => Padding(
+                          key: ValueKey('parcel-${shipment.id}'),
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (shipment.sellerName != null)
-                                AppText(shipment.sellerName!,
+                                Text(shipment.sellerName!,
                                     style: const TextStyle(
                                         fontWeight: FontWeight.w600)),
                               AppText('الحالة: ${shipment.statusLabel}'),
+                              if (order.shipments.length > 1)
+                                ...order.items
+                                    .where((i) =>
+                                        i.vendorId == shipment.sellerProfileId)
+                                    .map((i) => Text(
+                                        '• ${i.productName} × ${i.quantity}',
+                                        style: const TextStyle(
+                                            color: AppColors.muted,
+                                            fontSize: 12))),
+                              if (shipment.refundAmount > 0)
+                                AppText(
+                                    'أُعيد لك ${shipment.refundAmount.toStringAsFixed(0)} ل.س عن هذا الطرد.',
+                                    style: const TextStyle(
+                                        color: AppColors.emerald)),
+                              if (shipment.canBeCancelled &&
+                                  order.shipments.where((s) => s.isOpen).length > 1)
+                                TextButton.icon(
+                                  key: ValueKey('cancel-parcel-${shipment.id}'),
+                                  onPressed: _isCancelling
+                                      ? null
+                                      : () => _cancelParcel(shipment),
+                                  icon: const Icon(Icons.close,
+                                      size: 16, color: AppColors.danger),
+                                  label: const AppText('إلغاء هذا الطرد',
+                                      style:
+                                          TextStyle(color: AppColors.danger)),
+                                ),
                               if (shipment.shippingCompany != null)
                                 AppText('شركة الشحن: ${shipment.shippingCompany}'),
                               if (shipment.trackingNumber != null)
@@ -660,7 +730,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   const AppText('حالة الطلب',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
-                  Chip(label: AppText(order.statusLabel)),
+                  Chip(
+                      label: AppText(order.isPartiallyShipped
+                          ? 'شُحن جزئياً'
+                          : order.statusLabel)),
                   const SizedBox(height: 12),
                   OrderTrackerTimeline(
                     status: order.status,

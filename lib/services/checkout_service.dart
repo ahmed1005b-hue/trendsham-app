@@ -183,6 +183,12 @@ class OrderService {
     return Order.fromJson(data['data'] ?? data);
   }
 
+  /// إلغاء طرد متجر واحد من الطلب ما دام «قيد المراجعة»
+  Future<Order> cancelParcel(int orderId, int parcelId) async {
+    final data = await _api.post('/orders/$orderId/parcels/$parcelId/cancel');
+    return Order.fromJson(data['data'] ?? data);
+  }
+
   /// فاتورة الطلب PDF
   Future<Uint8List> invoice(int id) => _api.getBytes('/orders/$id/invoice');
 

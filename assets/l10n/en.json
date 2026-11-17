@@ -1801,5 +1801,14 @@
   "ظاهر للزبائن": "Visible to customers",
   "غير نشط - لا يظهر للزبائن": "Inactive - hidden from customers",
   "مرفوض: ${product.rejectionNote}": "Rejected: @{product.rejectionNote}",
-  "مسودة - لا يظهر للزبائن": "Draft - hidden from customers"
+  "مسودة - لا يظهر للزبائن": "Draft - hidden from customers",
+  "أُعيد لك ${shipment.refundAmount.toStringAsFixed(0)} ل.س عن هذا الطرد.": "@{shipment.refundAmount.toStringAsFixed(0)} SYP was returned to you for this parcel.",
+  "أُلغي طرد هذا المتجر وأُرجعت منتجاته، وبقية الطلب مستمرة.": "This store's parcel was cancelled and its items returned; the rest of the order continues.",
+  "إلغاء طرد هذا المتجر فقط؟ بقية الطلب تستمر.": "Cancel only this store's parcel? The rest of the order continues.",
+  "إلغاء هذا الطرد": "Cancel this parcel",
+  "رقم التتبع من شركة الشحن (عند الشحن)": "Tracking number from the shipping company (when shipped)",
+  "شُحن جزئياً": "Partly shipped",
+  "طردك: ${Shipment.statusLabels[item.parcelStatus] ?? item.parcelStatus}": "Your parcel: @{Shipment.statusLabels[item.parcelStatus] ?? item.parcelStatus}",
+  "طرود الطلب": "Order parcels",
+  "طلبك من ${order.shipments.length} متاجر، وكل متجر يرسل طرده وحده.": "Your order is from @{order.shipments.length} stores, and each store sends its own parcel."
 }
