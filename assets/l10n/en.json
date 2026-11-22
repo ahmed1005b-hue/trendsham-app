@@ -1830,5 +1830,12 @@
   "القنيطرة": "Quneitra",
   "دير الزور": "Deir ez-Zor",
   "الرقة": "Raqqa",
-  "الحسكة": "Al-Hasakah"
+  "الحسكة": "Al-Hasakah",
+  "يجب تحديث التطبيق": "Please update the app",
+  "يوجد تحديث جديد": "A new update is available",
+  "هذه النسخة قديمة ولم تعد تعمل. حدّث التطبيق من المتجر للمتابعة.": "This version is too old and no longer works. Update the app from the store to continue.",
+  "نسخة جديدة من تريندشام متوفرة، فيها ميزات وتحسينات.": "A new version of TrendSham is available with new features and improvements.",
+  "لاحقاً": "Later",
+  "تحديث الآن": "Update now",
+  "الإصدار $v": "Version @{v}"
 }

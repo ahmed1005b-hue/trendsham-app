@@ -15,6 +15,7 @@ import 'utils/notification_router.dart';
 import 'utils/role_router.dart';
 import 'widgets/consent_banner.dart';
 import 'theme/theme_switcher.dart';
+import 'services/app_update.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,8 +63,8 @@ class TrendShamApp extends StatelessWidget {
           ],
           builder: (context, child) {
             final themed = Theme(
-              data: AppTheme.forLanguage(
-                  Theme.of(context), Localizations.localeOf(context).languageCode),
+              data: AppTheme.forLanguage(Theme.of(context),
+                  Localizations.localeOf(context).languageCode),
               child: child!,
             );
             return Stack(
@@ -83,7 +84,7 @@ class TrendShamApp extends StatelessWidget {
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: themeController.themeMode,
-          home: const RootRouter(),
+          home: const AppUpdateGate(child: RootRouter()),
         );
       },
     );

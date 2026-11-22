@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trendsham/l10n/app_localizations.dart';
+import 'package:trendsham/services/app_update.dart';
 import 'package:trendsham/widgets/social_brand.dart';
 
 /// يُشغَّل قبل كل ملف اختبار: يحمّل ملفات الترجمة خارج الوقت الوهمي
@@ -11,5 +12,8 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   await L10nCatalog.load();
   // قسم «تابعنا» لا يتصل بالإنترنت في الاختبارات
   FollowUsSection.loader = () async => const [];
+  // فحص التحديث ورقم الإصدار لا يتصلان بالإنترنت ولا بالمنصة في الاختبارات
+  AppUpdateGate.loader = () async => ('1.1.0', null);
+  AppVersionLabel.version = () async => '1.1.0';
   await testMain();
 }

@@ -1830,5 +1830,12 @@
   "القنيطرة": "Kuneytra",
   "دير الزور": "Deir ez-Zor",
   "الرقة": "Rakka",
-  "الحسكة": "Haseke"
+  "الحسكة": "Haseke",
+  "يجب تحديث التطبيق": "Uygulamayı güncellemelisiniz",
+  "يوجد تحديث جديد": "Yeni bir güncelleme var",
+  "هذه النسخة قديمة ولم تعد تعمل. حدّث التطبيق من المتجر للمتابعة.": "Bu sürüm çok eski ve artık çalışmıyor. Devam etmek için uygulamayı mağazadan güncelleyin.",
+  "نسخة جديدة من تريندشام متوفرة، فيها ميزات وتحسينات.": "TrendSham'ın yeni özellikler ve iyileştirmeler içeren yeni sürümü hazır.",
+  "لاحقاً": "Daha sonra",
+  "تحديث الآن": "Şimdi güncelle",
+  "الإصدار $v": "Sürüm @{v}"
 }

@@ -28,6 +28,7 @@ import 'my_addresses_screen.dart';
 import 'account_management_screen.dart';
 import '../followed_stores/followed_stores_screen.dart';
 import '../../widgets/social_brand.dart';
+import '../../services/app_update.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -358,6 +359,8 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
 
+                    const SizedBox(height: 16),
+                    const AppVersionLabel(),
                     const SizedBox(height: 24),
                   ],
                 ),
