@@ -27,6 +27,7 @@ import '../../utils/profile_completion.dart';
 import 'my_addresses_screen.dart';
 import 'account_management_screen.dart';
 import '../followed_stores/followed_stores_screen.dart';
+import '../../widgets/social_brand.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -321,6 +322,10 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ]),
 
+                    const SizedBox(height: 24),
+
+                    // حسابات تريندشام على مواقع التواصل (نفس أيقونات أسفل الموقع)
+                    const FollowUsSection(),
                     const SizedBox(height: 24),
 
                     // 7. Logout Button

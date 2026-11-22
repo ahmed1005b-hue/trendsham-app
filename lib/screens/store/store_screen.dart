@@ -1,3 +1,5 @@
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../widgets/social_brand.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -303,7 +305,8 @@ class _StoreScreenState extends State<StoreScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: AppText('تعذّر حفظ اختيارك، غيّره من إعدادات الإشعارات.')));
+            content:
+                AppText('تعذّر حفظ اختيارك، غيّره من إعدادات الإشعارات.')));
       }
     }
   }
@@ -569,7 +572,8 @@ class _StoreScreenState extends State<StoreScreen> {
                   child: CustomScrollView(
                     slivers: [
                       SliverToBoxAdapter(child: _buildStoreHeader(_store!)),
-                      SliverToBoxAdapter(child: StoreCouponsStrip(coupons: _coupons)),
+                      SliverToBoxAdapter(
+                          child: StoreCouponsStrip(coupons: _coupons)),
                       // ===== تقييمات البائع (نجوم المتجر) =====
                       SliverToBoxAdapter(
                         child: SellerReviewsSection(storeId: widget.storeId),
@@ -912,17 +916,11 @@ class _StoreScreenState extends State<StoreScreen> {
                         label: const AppText('اتصال'),
                       ),
                     if (store.storeWhatsapp?.isNotEmpty == true)
-                      OutlinedButton.icon(
-                        onPressed: () => _launchContact(store.storeWhatsapp),
-                        icon: const Icon(Icons.chat_outlined, size: 17),
-                        label: const AppText('واتساب'),
-                      ),
+                      _brandButton('whatsapp', 'واتساب',
+                          () => _launchContact(store.storeWhatsapp)),
                     if (store.storeInstagram?.isNotEmpty == true)
-                      OutlinedButton.icon(
-                        onPressed: () => _launchContact(store.storeInstagram),
-                        icon: const Icon(Icons.camera_alt_outlined, size: 17),
-                        label: const AppText('إنستغرام'),
-                      ),
+                      _brandButton('instagram', 'إنستغرام',
+                          () => _launchContact(store.storeInstagram)),
                   ],
                 ),
               ],
@@ -1047,6 +1045,36 @@ class _StoreScreenState extends State<StoreScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  /// زر تواصل بشعار الموقع الحقيقي ولونه الأصلي (واتساب أخضر، إنستغرام بتدرّجه)
+  Widget _brandButton(String key, String label, VoidCallback onTap) {
+    final brand = SocialBrand.of(key);
+    return Material(
+      key: ValueKey('store-$key'),
+      color: Colors.transparent,
+      child: Ink(
+        decoration: BoxDecoration(
+          color: brand.gradient == null ? brand.color : null,
+          gradient: brand.gradient,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              FaIcon(brand.icon, size: 16, color: Colors.white),
+              const SizedBox(width: 8),
+              AppText(label,
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+            ]),
+          ),
+        ),
       ),
     );
   }

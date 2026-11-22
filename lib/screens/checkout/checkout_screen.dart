@@ -41,6 +41,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   /// طريقة الاستلام: home توصيل للبيت، center استلام من مركز كرم
   String _deliveryMethod = 'home';
   int? _pickupCenterId;
+
+  /// محافظة الزبون (null = يخمّنها الخادم من العنوان) والمتاجر التي سيستلم طردها من محلها
+  String? _governorate;
+  final Set<int> _pickupStores = {};
   List<ShippingCenterGroup> _centerGroups = const [];
   bool _centersLoading = false;
   final _centerService = ShippingCenterService();
@@ -94,10 +98,100 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   void _pickAddress(UserAddress a) {
+    final changed = _selectedAddressId != null && _selectedAddressId != a.id;
     setState(() {
       _selectedAddressId = a.id;
       _addressController.text = a.shippingText;
+      // عنوان آخر: نترك الخادم يخمّن محافظته ويعيد حساب أجرة كل طرد
+      if (changed) _governorate = null;
     });
+    if (changed) _loadSummary();
+  }
+
+  void _setGovernorate(String? governorate) {
+    if (governorate == null || governorate == _governorate) return;
+    setState(() => _governorate = governorate);
+    _loadSummary();
+  }
+
+  void _togglePickup(int vendorId, bool pickup) {
+    setState(() =>
+        pickup ? _pickupStores.add(vendorId) : _pickupStores.remove(vendorId));
+    _loadSummary();
+  }
+
+  /// طرد كل متجر: من يوصله، أجرته، متى يصل، وخيار الاستلام من محله
+  Widget _parcelsCard(CheckoutSummary summary, String currency) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const AppText('التوصيل من كل متجر',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        for (final p in summary.parcels)
+          Container(
+            key: ValueKey('parcel-${p.vendorId}'),
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: scheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: scheme.outlineVariant),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Icon(
+                      p.mode == 'pickup'
+                          ? Icons.storefront_outlined
+                          : p.mode == 'self'
+                              ? Icons.delivery_dining_outlined
+                              : Icons.local_shipping_outlined,
+                      size: 20,
+                      color: p.mode == 'self'
+                          ? const Color(0xFF9A7425)
+                          : AppColors.emerald),
+                  const SizedBox(width: 8),
+                  Expanded(
+                      child: Text(p.storeName,
+                          style: const TextStyle(fontWeight: FontWeight.bold))),
+                  Text(
+                      p.fee == 0
+                          ? context.tr('مجاني')
+                          : '${p.fee.toStringAsFixed(0)} $currency',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: p.fee == 0 ? const Color(0xFF1F7A3A) : null)),
+                ]),
+                const SizedBox(height: 2),
+                Text('${p.modeLabel} · ${p.etaLabel}',
+                    style:
+                        const TextStyle(fontSize: 12, color: AppColors.muted)),
+                if (p.canPickup)
+                  CheckboxListTile(
+                    key: ValueKey('pickup-${p.vendorId}'),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    value: p.mode == 'pickup',
+                    onChanged: _summaryLoading
+                        ? null
+                        : (v) => _togglePickup(p.vendorId, v ?? false),
+                    title: const AppText(
+                        'سأستلمه من محل المتجر (بدون أجرة شحن)',
+                        style: TextStyle(fontSize: 13)),
+                    subtitle: p.mode == 'pickup' && p.pickupAddress != null
+                        ? Text(p.pickupAddress!,
+                            style: const TextStyle(fontSize: 12))
+                        : null,
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
 
   Future<void> _manageAddresses() async {
@@ -136,10 +230,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
     try {
       final summary = await _checkoutService.summary(
-          couponId: _couponChoice, deliveryMethod: _deliveryMethod);
+          couponId: _couponChoice,
+          deliveryMethod: _deliveryMethod,
+          governorate: _governorate,
+          shippingAddress: _addressController.text,
+          pickupStores: _pickupStores);
       if (!mounted) return;
       setState(() {
         _summary = summary;
+        _governorate ??= summary.shippingGovernorate;
         // بعد رفض استلام طلب: الدفع عند الاستلام ممنوع مؤقتاً
         if (summary.codBlocked && _paymentMethod == 'cash_on_delivery') {
           _paymentMethod = 'card';
@@ -206,7 +305,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           child: Row(children: [
             Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off,
-                color: selected ? AppColors.emerald : AppColors.muted, size: 20),
+                color: selected ? AppColors.emerald : AppColors.muted,
+                size: 20),
             const SizedBox(width: 10),
             Icon(icon, color: AppColors.emerald),
             const SizedBox(width: 10),
@@ -217,13 +317,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   AppText(title,
                       style: const TextStyle(fontWeight: FontWeight.bold)),
                   AppText(hint,
-                      style:
-                          const TextStyle(fontSize: 12, color: AppColors.muted)),
+                      style: const TextStyle(
+                          fontSize: 12, color: AppColors.muted)),
                 ],
               ),
             ),
             if (fee != null)
-              AppText(fee == 0 ? 'مجاني' : '${fee.toStringAsFixed(0)} $currency',
+              AppText(
+                  fee == 0 ? 'مجاني' : '${fee.toStringAsFixed(0)} $currency',
                   style: const TextStyle(fontWeight: FontWeight.bold)),
           ]),
         ),
@@ -249,8 +350,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       for (final c in group.centers) {
         items.add(DropdownMenuItem<int>(
           value: c.id,
-          child: Text('${c.name} - ${c.address}',
-              overflow: TextOverflow.ellipsis),
+          child:
+              Text('${c.name} - ${c.address}', overflow: TextOverflow.ellipsis),
         ));
       }
     }
@@ -341,6 +442,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         usePoints: _pointsToUse,
         useGiftBalance: _useGiftBalance && (_summary?.giftBalance ?? 0) > 0,
         deliveryMethod: _deliveryMethod,
+        governorate: _deliveryMethod == 'home' ? _governorate : null,
+        pickupStores: _pickupStores,
         pickupCenterId: _pickupCenterId,
       );
 
@@ -511,7 +614,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           content: AppText(message),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(ctx), child: const AppText('حسناً'))
+                onPressed: () => Navigator.pop(ctx),
+                child: const AppText('حسناً'))
           ],
         ),
       ),
@@ -583,17 +687,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _nameController,
-                  decoration:
-                      InputDecoration(labelText: context.tr('الاسم الكامل للاستلام')),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? context.tr('مطلوب') : null,
+                  decoration: InputDecoration(
+                      labelText: context.tr('الاسم الكامل للاستلام')),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? context.tr('مطلوب')
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _phoneController,
-                  decoration: InputDecoration(labelText: context.tr('رقم الهاتف')),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? context.tr('مطلوب') : null,
+                  decoration:
+                      InputDecoration(labelText: context.tr('رقم الهاتف')),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? context.tr('مطلوب')
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 const AppText('طريقة الاستلام',
@@ -601,10 +708,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 const SizedBox(height: 8),
                 _deliveryOption('home', Icons.home_outlined, 'توصيل للبيت',
                     'يصلك المندوب إلى عنوانك', currency),
-                _deliveryOption('center', Icons.storefront_outlined,
-                    'استلام من مركز شحن', 'تستلمه من مركز كرم الأقرب لك', currency),
+                _deliveryOption(
+                    'center',
+                    Icons.storefront_outlined,
+                    'استلام من مركز شحن',
+                    'تستلمه من مركز كرم الأقرب لك',
+                    currency),
                 const SizedBox(height: 4),
                 if (_deliveryMethod == 'center') _centerPicker(),
+                if (_deliveryMethod == 'home' &&
+                    (summary?.governorates ?? const []).isNotEmpty) ...[
+                  DropdownButtonFormField<String>(
+                    key: ValueKey('governorate-$_governorate'),
+                    initialValue: _governorate,
+                    isExpanded: true,
+                    items: [
+                      for (final g in summary!.governorates)
+                        DropdownMenuItem(value: g, child: AppText(g)),
+                    ],
+                    decoration:
+                        InputDecoration(labelText: context.tr('المحافظة')),
+                    hint: const AppText('اختر محافظتك'),
+                    onChanged: _summaryLoading ? null : _setGovernorate,
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4, bottom: 12),
+                    child: AppText(
+                        'بعض المتاجر توصل بنفسها بسعر خاص لكل محافظة.',
+                        style: TextStyle(fontSize: 12, color: AppColors.muted)),
+                  ),
+                ],
                 if (_deliveryMethod == 'home' && _addresses.isNotEmpty) ...[
                   const AppText('عناويني المحفوظة',
                       style: TextStyle(fontWeight: FontWeight.w600)),
@@ -635,25 +768,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 8),
                 ],
                 if (_deliveryMethod == 'home')
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: TextButton.icon(
-                    onPressed: _manageAddresses,
-                    icon:
-                        const Icon(Icons.edit_location_alt_outlined, size: 18),
-                    label: AppText(
-                        _addresses.isEmpty ? 'أضف عنوان شحن' : 'إدارة عناويني'),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: TextButton.icon(
+                      onPressed: _manageAddresses,
+                      icon: const Icon(Icons.edit_location_alt_outlined,
+                          size: 18),
+                      label: AppText(_addresses.isEmpty
+                          ? 'أضف عنوان شحن'
+                          : 'إدارة عناويني'),
+                    ),
                   ),
-                ),
                 if (_deliveryMethod == 'home')
-                TextFormField(
-                  controller: _addressController,
-                  maxLines: 3,
-                  decoration:
-                      InputDecoration(labelText: context.tr('عنوان التوصيل الكامل')),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? context.tr('مطلوب') : null,
-                ),
+                  TextFormField(
+                    controller: _addressController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                        labelText: context.tr('عنوان التوصيل الكامل')),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? context.tr('مطلوب')
+                        : null,
+                  ),
+                if ((summary?.parcels ?? const []).isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _parcelsCard(summary!, currency),
+                ],
                 const SizedBox(height: 20),
                 const AppText('طريقة الطلب / الدفع',
                     style: TextStyle(fontWeight: FontWeight.bold)),
@@ -855,7 +994,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             children: [
                               AppText(
                                   'خصم الكوبون${summary?.coupon?.sourceLabel != null ? ' (${summary!.coupon!.sourceLabel})' : ''}'),
-                              AppText('- ${discount.toStringAsFixed(0)} $currency',
+                              AppText(
+                                  '- ${discount.toStringAsFixed(0)} $currency',
                                   style: const TextStyle(
                                       color: Color(0xFF1F7A3A))),
                             ],
@@ -866,7 +1006,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              AppText('خصم النقاط (${pointsLabel(_pointsToUse)})'),
+                              AppText(
+                                  'خصم النقاط (${pointsLabel(_pointsToUse)})'),
                               AppText(
                                   '- ${pointsDiscount.toStringAsFixed(0)} $currency',
                                   style: const TextStyle(
@@ -899,7 +1040,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                         fontWeight: FontWeight.bold)),
                               ]))
                             else
-                              AppText('${shipping.toStringAsFixed(0)} $currency'),
+                              AppText(
+                                  '${shipping.toStringAsFixed(0)} $currency'),
                           ],
                         ),
                         if (summary?.hasHeavyParcel == true)
