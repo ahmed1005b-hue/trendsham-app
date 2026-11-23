@@ -11,6 +11,7 @@ import '../../services/api_exception.dart';
 import '../../utils/role_router.dart';
 import '../../widgets/preference_buttons.dart';
 import '../legal/legal_screen.dart';
+import '../../services/invitation_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   final bool returnAfterAuth;
@@ -33,9 +34,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _storeNameController = TextEditingController();
   final _referralController = TextEditingController();
   final _codeController = TextEditingController();
+  final _invitationController = TextEditingController();
   final _imagePicker = ImagePicker();
+  final _invitationService = InvitationService();
 
-  String _accountType = 'customer';
+  /// إنشاء الحساب للعملاء فقط؛ دعوة صالحة من الإدارة تجعله بائعاً أو موظفاً
+  InvitationPreview? _invitation;
+  bool _checkingInvitation = false;
+  bool _showInvitation = false;
+  String get _accountType => _invitation?.role ?? 'customer';
   XFile? _identityDocument;
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -57,6 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _storeNameController.dispose();
     _referralController.dispose();
     _codeController.dispose();
+    _invitationController.dispose();
     super.dispose();
   }
 
@@ -107,12 +115,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _submitDetails() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_accountType == 'seller' && _identityDocument == null) {
-      setState(
-          () => _errorMessage = 'أرفق صورة الهوية قبل متابعة تسجيل البائع.');
-      return;
-    }
-
     if (!_agreedToTerms) {
       setState(() => _errorMessage =
           'يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة.');
@@ -126,7 +128,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       await context.read<AuthProvider>().startRegistration(
-            accountType: _accountType,
+            invitationToken: _invitation == null
+                ? null
+                : invitationTokenFrom(_invitationController.text),
             firstName: _firstNameController.text.trim(),
             lastName: _lastNameController.text.trim(),
             phone: _phoneController.text.trim(),
@@ -239,53 +243,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (_errorMessage != null) _errorBanner(),
-          DropdownButtonFormField<String>(
-            isExpanded: true,
-            initialValue: _accountType,
-            decoration: InputDecoration(
-                labelText:
-                    AppLocalizations.of(context).translate('نوع الحساب')),
-            items: const [
-              DropdownMenuItem(
-                value: 'customer',
-                child: AppText(
-                  'عميل - أريد التسوّق',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              DropdownMenuItem(
-                value: 'seller',
-                child: AppText(
-                  'بائع - أريد فتح متجر',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              DropdownMenuItem(
-                value: 'employee',
-                child: AppText(
-                  'موظف - أطلب الانضمام لفريق العمل',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-            onChanged: (v) {
-              final accountType = v ?? 'customer';
-              setState(() => _accountType = accountType);
-              if (accountType != 'seller') {
-                unawaited(_deleteLocalIdentityDocument());
-              }
-            },
-          ),
-          if (_accountType == 'employee') ...[
-            const SizedBox(height: 8),
-            const AppText(
-              'سيُفعّل حساب الموظف بعد مراجعة المدير والموافقة على الطلب.',
-              style: TextStyle(fontSize: 12, color: AppColors.muted),
-            ),
-          ],
+          _invitationSection(),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -351,8 +309,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               decoration: InputDecoration(
                   labelText: AppLocalizations.of(context)
                       .translate('كود الدعوة (اختياري)'),
-                  helperText: AppLocalizations.of(context)
-                      .translate('إن دعاك صديق، تحصلان معاً على نقاط بعد أول طلب.')),
+                  helperText: AppLocalizations.of(context).translate(
+                      'إن دعاك صديق، تحصلان معاً على نقاط بعد أول طلب.')),
             ),
             const SizedBox(height: 16),
           ],
@@ -379,13 +337,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
             decoration: InputDecoration(
               labelText: AppLocalizations.of(context).translate('كلمة السر'),
               suffixIcon: IconButton(
-                tooltip: _obscurePassword ? 'إظهار كلمة المرور' : 'إخفاء كلمة المرور',
+                tooltip: _obscurePassword
+                    ? 'إظهار كلمة المرور'
+                    : 'إخفاء كلمة المرور',
                 icon: Icon(
                     _obscurePassword ? Icons.visibility_off : Icons.visibility),
                 onPressed: () =>
                     setState(() => _obscurePassword = !_obscurePassword),
               ),
-              helperText: context.tr('8 أحرف على الأقل، حرف كبير وصغير، رقم، ورمز'),
+              helperText:
+                  context.tr('8 أحرف على الأقل، حرف كبير وصغير، رقم، ورمز'),
               helperMaxLines: 2,
             ),
             validator: (v) => (v == null || v.length < 8)
@@ -469,6 +430,113 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ],
       ),
     );
+  }
+
+  /// رمز أو رابط دعوة من الإدارة (للبائعين والموظفين فقط)
+  Widget _invitationSection() {
+    final invitation = _invitation;
+    if (invitation != null) {
+      return Container(
+        key: const ValueKey('invitation-ok'),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.emerald.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.emerald.withValues(alpha: 0.4)),
+        ),
+        child: Row(children: [
+          const Icon(Icons.mark_email_read_outlined, color: AppColors.emerald),
+          const SizedBox(width: 10),
+          Expanded(
+            child: AppText(invitation.isSeller
+                ? 'دعتك إدارة تريندشام لفتح متجر. بعد إنشاء الحساب يعمل متجرك مباشرة.'
+                : 'دعتك إدارة تريندشام للانضمام لفريق العمل كموظف.'),
+          ),
+          IconButton(
+            tooltip: context.tr('إلغاء'),
+            icon: const Icon(Icons.close),
+            onPressed: () {
+              setState(() {
+                _invitation = null;
+                _invitationController.clear();
+              });
+              unawaited(_deleteLocalIdentityDocument());
+            },
+          ),
+        ]),
+      );
+    }
+    if (!_showInvitation) {
+      return Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: TextButton.icon(
+          key: const ValueKey('invitation-open'),
+          onPressed: () => setState(() => _showInvitation = true),
+          icon: const Icon(Icons.mail_outline, size: 18),
+          label: const AppText('عندك دعوة كبائع أو موظف؟'),
+        ),
+      );
+    }
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Expanded(
+        child: TextField(
+          key: const ValueKey('invitation-code'),
+          controller: _invitationController,
+          decoration: InputDecoration(
+            labelText: context.tr('رمز أو رابط الدعوة'),
+            helperText: context.tr('الصق الرابط الذي أرسلته لك الإدارة.'),
+          ),
+        ),
+      ),
+      const SizedBox(width: 8),
+      Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: FilledButton(
+          onPressed: _checkingInvitation ? null : _checkInvitation,
+          child: _checkingInvitation
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2))
+              : const AppText('تحقق'),
+        ),
+      ),
+    ]);
+  }
+
+  Future<void> _checkInvitation() async {
+    final code = _invitationController.text.trim();
+    if (code.isEmpty) return;
+    setState(() {
+      _checkingInvitation = true;
+      _errorMessage = null;
+    });
+    try {
+      final preview = await _invitationService.check(code);
+      if (!mounted) return;
+      if (!preview.usable) {
+        setState(() => _errorMessage = preview.problem);
+        return;
+      }
+      setState(() {
+        _invitation = preview;
+        if (preview.isSeller && (preview.storeName ?? '').isNotEmpty) {
+          _storeNameController.text = preview.storeName!;
+        }
+        if ((preview.phone ?? '').isNotEmpty) {
+          _phoneController.text = preview.phone!;
+        }
+        if ((preview.email ?? '').isNotEmpty) {
+          _emailController.text = preview.email!;
+        }
+      });
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _errorMessage = e.message);
+    } catch (_) {
+      if (mounted) setState(() => _errorMessage = 'تعذّر الاتصال بالسيرفر.');
+    } finally {
+      if (mounted) setState(() => _checkingInvitation = false);
+    }
   }
 
   Widget _buildOtpStep() {

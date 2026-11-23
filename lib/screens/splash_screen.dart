@@ -94,24 +94,26 @@ class _SplashScreenState extends State<SplashScreen> {
       );
     }
 
-    return const Scaffold(
-      // نفس لون أيقونة التطبيق وشاشة البداية الأصلية
-      backgroundColor: Color(0xFFFF3B5C),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppText(
-              'تريندشام',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold),
+    return Scaffold(
+      // نفس أيقونة التطبيق وشاشة البداية الأصلية: أخضر بخطوط دمشقية مذهّبة وكلمة تريندشام
+      backgroundColor: const Color(0xFF073D30),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset('assets/icon/trendsham_icon_green_bg.png',
+              fit: BoxFit.cover, semanticLabel: context.tr('تريندشام')),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset('assets/icon/trendsham_icon_green_splash.png',
+                    width: 300, excludeFromSemantics: true),
+                const SizedBox(height: 8),
+                const CircularProgressIndicator(color: Color(0xFFE9C46A)),
+              ],
             ),
-            SizedBox(height: 20),
-            CircularProgressIndicator(color: Colors.white),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -29,6 +29,7 @@ import 'account_management_screen.dart';
 import '../followed_stores/followed_stores_screen.dart';
 import '../../widgets/social_brand.dart';
 import '../../services/app_update.dart';
+import '../../widgets/accept_invitation_dialog.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -129,6 +130,15 @@ class ProfileScreen extends StatelessWidget {
                         _buildDivider(context),
                       ],
                       if (user != null && user.role == 'customer') ...[
+                        // البيع والعمل بدعوة من الإدارة فقط: العميل يقبل الدعوة بحسابه هنا
+                        _buildListTile(
+                          context,
+                          icon: Icons.mark_email_unread_outlined,
+                          iconColor: const Color(0xFF0B5F4A),
+                          title: 'عندك دعوة كبائع أو موظف؟',
+                          onTap: () => showAcceptInvitationDialog(context),
+                        ),
+                        _buildDivider(context),
                         _buildListTile(
                           context,
                           icon: Icons.credit_card_rounded,

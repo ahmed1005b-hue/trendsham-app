@@ -9,7 +9,8 @@ import 'package:trendsham/screens/auth/register_screen.dart';
 import 'package:trendsham/theme/theme_switcher.dart';
 
 void main() {
-  testWidgets('seller registration asks for a private identity image',
+  testWidgets(
+      'sign-up is for customers; sellers and employees use an invitation',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
@@ -39,18 +40,13 @@ void main() {
     expect(find.byType(RegisterScreen), findsOneWidget);
     expect(find.byType(Scaffold), findsOneWidget);
     expect(find.byType(Form), findsOneWidget);
-    final accountTypeField = tester.widget<DropdownButtonFormField<String>>(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget.runtimeType.toString().startsWith('DropdownButtonFormField'),
-      ),
-    );
-    accountTypeField.onChanged?.call('seller');
+    // لا سؤال «نوع الحساب»: إنشاء الحساب للعملاء، والبائع والموظف بدعوة
+    expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+    expect(find.text('اختيار صورة الهوية'), findsNothing);
+    await tester.ensureVisible(find.byKey(const ValueKey('invitation-open')));
+    await tester.tap(find.byKey(const ValueKey('invitation-open')));
     await tester.pumpAndSettle();
-
-    expect(
-        find.text('صورة هوية وطنية أو صفحة بيانات جواز السفر'), findsOneWidget);
-    expect(find.textContaining('تُتاح للإدارة فقط'), findsOneWidget);
-    expect(find.text('اختيار صورة الهوية'), findsOneWidget);
+    expect(find.byKey(const ValueKey('invitation-code')), findsOneWidget);
+    expect(find.text('رمز أو رابط الدعوة'), findsOneWidget);
   });
 }

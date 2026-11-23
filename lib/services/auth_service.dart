@@ -10,8 +10,9 @@ class AuthService {
   /// رسالة من السيرفر عند آخر دخول (مثل: أُعيد تفعيل حسابك / أُلغي طلب الحذف).
   String? lastLoginNotice;
 
+  /// إنشاء الحساب للعملاء فقط؛ رمز/رابط دعوة من الإدارة يجعله بائعاً أو موظفاً.
   Future<void> register({
-    required String accountType,
+    String? invitationToken,
     required String firstName,
     required String lastName,
     required String phone,
@@ -26,7 +27,8 @@ class AuthService {
       '/auth/register',
       withAuth: false,
       body: {
-        'account_type': accountType,
+        if (invitationToken != null && invitationToken.isNotEmpty)
+          'invitation_token': invitationToken,
         'first_name': firstName,
         'last_name': lastName,
         'phone': phone,

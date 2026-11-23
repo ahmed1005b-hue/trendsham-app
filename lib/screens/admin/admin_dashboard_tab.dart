@@ -17,6 +17,7 @@ import 'admin_reports_screen.dart';
 import 'admin_shipping_companies_screen.dart';
 import 'admin_showcases_screen.dart';
 import 'admin_support_screen.dart';
+import 'admin_invitations_screen.dart';
 
 class AdminDashboardTab extends StatefulWidget {
   const AdminDashboardTab({super.key, this.service});
@@ -101,8 +102,8 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
       ),
     ];
 
-    void open(Widget screen) => Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => screen));
+    void open(Widget screen) =>
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
 
     final groups = <(String, IconData, List<Widget>)>[
       (
@@ -170,6 +171,10 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
               icon: Icons.local_shipping_outlined,
               label: 'شركات الشحن',
               onTap: () => open(const AdminShippingCompaniesScreen())),
+          _quickAccessTile(context,
+              icon: Icons.mark_email_unread_outlined,
+              label: 'دعوات الانضمام',
+              onTap: () => open(const AdminInvitationsScreen())),
           _quickAccessTile(context,
               icon: Icons.badge_outlined,
               label: 'الموظفون',

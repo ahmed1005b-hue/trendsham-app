@@ -61,7 +61,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> startRegistration({
-    required String accountType,
+    String? invitationToken,
     required String firstName,
     required String lastName,
     required String phone,
@@ -73,7 +73,7 @@ class AuthProvider extends ChangeNotifier {
     String? referralCode,
   }) async {
     await _authService.register(
-      accountType: accountType,
+      invitationToken: invitationToken,
       firstName: firstName,
       lastName: lastName,
       phone: phone,

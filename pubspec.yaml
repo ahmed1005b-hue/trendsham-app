@@ -49,20 +49,20 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "assets/icon/trendsham_icon_coral.png"
+  image_path: "assets/icon/trendsham_icon_green.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#FF3B5C"
-  adaptive_icon_foreground: "assets/icon/trendsham_icon_coral_fg.png"
+  adaptive_icon_background: "assets/icon/trendsham_icon_green_bg.png"
+  adaptive_icon_foreground: "assets/icon/trendsham_icon_green_fg.png"
   remove_alpha_ios: true
 
 flutter_native_splash:
-  color: "#FF3B5C"
-  image: "assets/icon/trendsham_icon_coral_fg.png"
+  color: "#073D30"
+  image: "assets/icon/trendsham_icon_green_splash.png"
   android: true
   ios: false
   android_12:
-    color: "#FF3B5C"
-    image: "assets/icon/trendsham_icon_coral_fg.png"
+    color: "#073D30"
+    image: "assets/icon/trendsham_icon_green_splash.png"
 dependency_overrides:
   archive: ^4.0.20
 
