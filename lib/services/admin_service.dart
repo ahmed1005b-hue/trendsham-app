@@ -269,20 +269,14 @@ class AdminService {
   }
 
   // ===== إعدادات المنصة =====
+  /// كل إعدادات المنصة الرقمية (العمولة، الستوري، أجور الشحن، الديون، مهل المرتجعات)
   Future<Map<String, dynamic>> settings() async {
     final data = await _api.get('/admin/settings');
-    return {
-      'commission_rate': data['commission_rate'] ?? 0,
-      'story_fee': double.tryParse(data['story_fee'].toString()) ?? 0,
-    };
+    return Map<String, dynamic>.from(data as Map);
   }
 
-  Future<void> updateSettings(
-      {required int commissionRate, required double storyFee}) async {
-    await _api.put('/admin/settings', body: {
-      'commission_rate': commissionRate,
-      'story_fee': storyFee,
-    });
+  Future<void> updateSettings(Map<String, num> values) async {
+    await _api.put('/admin/settings', body: values);
   }
 
   // ===== إدارة الطلبات =====

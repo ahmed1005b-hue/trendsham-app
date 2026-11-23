@@ -18,6 +18,15 @@ import 'admin_shipping_companies_screen.dart';
 import 'admin_showcases_screen.dart';
 import 'admin_support_screen.dart';
 import 'admin_invitations_screen.dart';
+import 'admin_debts_screen.dart';
+import 'admin_trash_screen.dart';
+import 'admin_assistant_screen.dart';
+import 'admin_two_factor_screen.dart';
+import 'admin_broadcast_screen.dart';
+import 'admin_gift_cards_screen.dart';
+import 'admin_loyalty_screen.dart';
+import 'admin_returns_screen.dart';
+import 'admin_seller_coupons_screen.dart';
 
 class AdminDashboardTab extends StatefulWidget {
   const AdminDashboardTab({super.key, this.service});
@@ -171,6 +180,42 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
               icon: Icons.local_shipping_outlined,
               label: 'شركات الشحن',
               onTap: () => open(const AdminShippingCompaniesScreen())),
+          _quickAccessTile(context,
+              icon: Icons.delete_sweep_outlined,
+              label: 'المحذوفات',
+              onTap: () => open(const AdminTrashScreen())),
+          _quickAccessTile(context,
+              icon: Icons.smart_toy_outlined,
+              label: 'المساعد الذكي',
+              onTap: () => open(const AdminAssistantScreen())),
+          _quickAccessTile(context,
+              icon: Icons.shield_outlined,
+              label: 'أمان الحساب',
+              onTap: () => open(const AdminTwoFactorScreen())),
+          _quickAccessTile(context,
+              icon: Icons.campaign_outlined,
+              label: 'إشعار جماعي',
+              onTap: () => open(const AdminBroadcastScreen())),
+          _quickAccessTile(context,
+              icon: Icons.card_giftcard_outlined,
+              label: 'بطاقات الهدايا',
+              onTap: () => open(const AdminGiftCardsScreen())),
+          _quickAccessTile(context,
+              icon: Icons.stars_outlined,
+              label: 'نقاط الولاء',
+              onTap: () => open(const AdminLoyaltyScreen())),
+          _quickAccessTile(context,
+              icon: Icons.money_off_csred_outlined,
+              label: 'ديون المتاجر',
+              onTap: () => open(const AdminDebtsScreen())),
+          _quickAccessTile(context,
+              icon: Icons.assignment_return_outlined,
+              label: 'المرتجعات',
+              onTap: () => open(const AdminReturnsScreen())),
+          _quickAccessTile(context,
+              icon: Icons.confirmation_number_outlined,
+              label: 'كوبونات البائعين',
+              onTap: () => open(const AdminSellerCouponsScreen())),
           _quickAccessTile(context,
               icon: Icons.mark_email_unread_outlined,
               label: 'دعوات الانضمام',

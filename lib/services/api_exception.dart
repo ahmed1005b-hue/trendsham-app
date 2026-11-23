@@ -3,7 +3,10 @@ class ApiException implements Exception {
   final int? statusCode;
   final Map<String, dynamic>? errors;
 
-  const ApiException(this.message, {this.statusCode, this.errors});
+  /// رمز الحالة من الخادم إن أرسله (مثل two_factor_setup_required)
+  final String? code;
+
+  const ApiException(this.message, {this.statusCode, this.errors, this.code});
 
   @override
   String toString() => message;

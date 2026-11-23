@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trendsham/l10n/app_localizations.dart';
+import 'package:trendsham/screens/admin/admin_main_screen.dart';
 import 'package:trendsham/services/app_update.dart';
 import 'package:trendsham/widgets/social_brand.dart';
 
@@ -15,5 +16,7 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   // فحص التحديث ورقم الإصدار لا يتصلان بالإنترنت ولا بالمنصة في الاختبارات
   AppUpdateGate.loader = () async => ('1.1.0', null);
   AppVersionLabel.version = () async => '1.1.0';
+  // لوحة المدير لا تفحص التحقق بخطوتين عبر الإنترنت في الاختبارات
+  AdminMainScreen.needsTwoFactorSetup = () async => false;
   await testMain();
 }

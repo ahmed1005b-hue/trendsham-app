@@ -273,6 +273,8 @@ class ApiClient {
         ? decoded['message'].toString()
         : 'حدث خطأ، حاول مرة أخرى.';
 
-    throw ApiException(message, statusCode: res.statusCode);
+    throw ApiException(message,
+        statusCode: res.statusCode,
+        code: decoded is Map ? decoded['code']?.toString() : null);
   }
 }

@@ -6,9 +6,16 @@ import 'admin_sellers_screen.dart';
 import 'admin_products_screen.dart';
 import 'admin_withdrawals_screen.dart';
 import '../profile/profile_screen.dart';
+import '../../services/admin_tools_service.dart';
+import '../../widgets/app_state_message.dart';
+import 'admin_two_factor_screen.dart';
 
 class AdminMainScreen extends StatefulWidget {
   const AdminMainScreen({super.key});
+
+  /// هل يحتاج المدير إعداد التحقق بخطوتين قبل اللوحة؟ (قابل للاستبدال في الاختبارات)
+  static Future<bool> Function() needsTwoFactorSetup =
+      () async => (await AdminToolsService().twoFactor()).needsSetup;
 
   @override
   State<AdminMainScreen> createState() => _AdminMainScreenState();
@@ -16,6 +23,26 @@ class AdminMainScreen extends StatefulWidget {
 
 class _AdminMainScreenState extends State<AdminMainScreen> {
   int _index = 0;
+
+  /// null = نتحقق الآن. اللوحة مقفلة حتى يُعدّ التحقق بخطوتين (مثل الموقع)
+  bool? _needsSetup;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSetup();
+  }
+
+  Future<void> _checkSetup() async {
+    bool needs;
+    try {
+      needs = await AdminMainScreen.needsTwoFactorSetup();
+    } catch (_) {
+      // تعذّر الفحص: نعرض اللوحة، وكل شاشة تعرض رسالة الخادم إن رفض
+      needs = false;
+    }
+    if (mounted) setState(() => _needsSetup = needs);
+  }
 
   final _tabs = const [
     AdminDashboardTab(),
@@ -27,6 +54,13 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_needsSetup == null) {
+      return const Scaffold(body: LoadingIndicator());
+    }
+    if (_needsSetup!) {
+      return AdminTwoFactorScreen(
+          onEnabled: () => setState(() => _needsSetup = false));
+    }
     return Scaffold(
       body: IndexedStack(index: _index, children: _tabs),
       bottomNavigationBar: NavigationBar(
