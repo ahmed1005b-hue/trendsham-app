@@ -2,11 +2,13 @@ import '../models/category.dart';
 import '../models/product.dart';
 import '../models/product_options.dart';
 import '../models/order.dart';
+import '../models/seller_parcel.dart';
 import '../models/seller_profile.dart';
 import '../models/coupon_story.dart';
 import '../models/seller_review.dart';
 import 'package:image_picker/image_picker.dart';
 import 'api_client.dart';
+import 'dart:typed_data';
 
 class SellerService {
   final ApiClient _api = ApiClient();
@@ -411,6 +413,29 @@ class SellerService {
         .map((i) => OrderItem.fromJson(Map<String, dynamic>.from(i)))
         .toList();
   }
+
+  /// مؤشرات الأداء لفترة (7 أو 14 أو 30 أو 90 يوماً) — نفس صفحة الإحصائيات في الموقع
+  Future<Map<String, dynamic>> analytics({int days = 30}) async {
+    final data =
+        await _api.get('/seller/dashboard/analytics', query: {'days': '$days'});
+    return Map<String, dynamic>.from(data);
+  }
+
+  /// تفاصيل طلب للبائع: بنود متجره فقط + طرده (طريقة التوصيل والمبلغ المطلوب)
+  Future<(Order, SellerParcel)> orderDetail(int orderId) async {
+    final raw =
+        Map<String, dynamic>.from(await _api.get('/seller/orders/$orderId'));
+    final data =
+        raw['data'] is Map ? Map<String, dynamic>.from(raw['data']) : raw;
+    final parcel = raw['parcel'] is Map
+        ? Map<String, dynamic>.from(raw['parcel'])
+        : <String, dynamic>{};
+    return (Order.fromJson(data), SellerParcel.fromJson(parcel));
+  }
+
+  /// ملصق الشحنة PDF لطرد البائع في هذا الطلب (نفس ملصق الموقع)
+  Future<Uint8List> parcelLabel(int orderId) =>
+      _api.getBytes('/seller/orders/$orderId/label');
 
   Future<void> updateOrderStatus(int orderId, String status,
       {String? trackingNumber}) async {

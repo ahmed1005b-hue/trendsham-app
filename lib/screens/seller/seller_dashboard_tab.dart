@@ -26,6 +26,8 @@ import 'seller_store_profile_screen.dart';
 import 'seller_questions_screen.dart';
 import 'seller_showcases_screen.dart';
 import 'seller_returns_screen.dart';
+import 'seller_shipping_settings_screen.dart';
+import 'seller_analytics_screen.dart';
 import '../messages/buyer_seller_messages_screen.dart';
 
 class SellerDashboardTab extends StatefulWidget {
@@ -401,6 +403,26 @@ class _SellerDashboardTabState extends State<SellerDashboardTab> {
               subtitle: 'متابعة الطلبات الواردة',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const SellerOrdersScreen()),
+              ),
+            ),
+            _quickTile(
+              context,
+              icon: Icons.insights_outlined,
+              title: 'مؤشرات الأداء',
+              subtitle: 'المبيعات والدخل بالتفصيل',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (_) => const SellerAnalyticsScreen()),
+              ),
+            ),
+            _quickTile(
+              context,
+              icon: Icons.local_shipping_outlined,
+              title: 'إعدادات الشحن',
+              subtitle: 'من يوصل طلباتك وبكم',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (_) => const SellerShippingSettingsScreen()),
               ),
             ),
             _quickTile(

@@ -10,6 +10,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'seller_payment_methods_screen.dart';
+import 'seller_shipping_settings_screen.dart';
 
 class SellerWalletScreen extends StatefulWidget {
   final int? sellerId;
@@ -319,9 +320,54 @@ class _SellerWalletScreenState extends State<SellerWalletScreen> {
     final transactions = _data!['transactions'] as List<WalletTransactionModel>;
     final locale = Localizations.localeOf(context).toString();
 
+    final balance = (_data!['balance'] as num?)?.toDouble() ?? 0;
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // رصيد بالسالب = دين للمنصة (عمولات طلبات وصّلها بنفسه وحصّل ثمنها نقداً)
+        if (balance < 0)
+          Card(
+            key: const ValueKey('wallet-debt'),
+            color: const Color(0xFFFFF4E0),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.warning_amber_rounded,
+                      color: Color(0xFFC9962C)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AppText(
+                          context.tr('عليك :amount ل.س للمنصة.').replaceAll(
+                              ':amount',
+                              NumberFormat.decimalPattern('en')
+                                  .format(-balance)),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        const AppText(
+                            'هذه عمولات طلبات وصّلتها بنفسك وحصّلت ثمنها نقداً. تُخصم تلقائياً من مبيعاتك القادمة، أو سدّدها للإدارة.',
+                            style: TextStyle(fontSize: 13)),
+                        TextButton(
+                          style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                          onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      const SellerShippingSettingsScreen())),
+                          child: const AppText('إعدادات الشحن'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
