@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:trendsham/models/user.dart';
 import 'package:trendsham/screens/admin/admin_main_screen.dart';
 import 'package:trendsham/utils/role_router.dart';
+import 'package:trendsham/widgets/staff_session_guard.dart';
 
 void main() {
   test('normalizes the authenticated role before routing', () {
@@ -12,7 +13,10 @@ void main() {
     });
 
     expect(user.role, 'admin');
-    expect(roleHomeScreen(user.role), isA<AdminMainScreen>());
+    final home = roleHomeScreen(user.role);
+    expect(home, isA<StaffSessionGuard>());
+    expect((home as StaffSessionGuard).child, isA<AdminMainScreen>());
+    expect(home.role, 'admin');
   });
 
   test('does not silently route an unsupported role to the customer screen',
