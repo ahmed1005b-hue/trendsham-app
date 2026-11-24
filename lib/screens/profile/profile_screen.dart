@@ -30,6 +30,7 @@ import '../followed_stores/followed_stores_screen.dart';
 import '../../widgets/social_brand.dart';
 import '../../services/app_update.dart';
 import '../../widgets/accept_invitation_dialog.dart';
+import '../seller/seller_support_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -39,6 +40,8 @@ class ProfileScreen extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
     final colorScheme = Theme.of(context).colorScheme;
+    // البائع والمدير والموظف لا يشترون: لا تظهر لهم أقسام التسوق
+    final isShopper = _isShopper(user);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -57,12 +60,13 @@ class ProfileScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // 2. Quick Action Grid (4-Items Row)
-                    _buildQuickActionGrid(context, user),
-
-                    const SizedBox(height: 12),
+                    if (isShopper) ...[
+                      _buildQuickActionGrid(context, user),
+                      const SizedBox(height: 12),
+                    ],
 
                     // 3. Customer Messages & Stores Row (2 Items)
-                    if (user != null) ...[
+                    if (user != null && isShopper) ...[
                       _buildSecondaryQuickActions(context, user),
                       const SizedBox(height: 16),
                     ],
@@ -77,7 +81,8 @@ class ProfileScreen extends StatelessWidget {
                           icon: Icons.person_outline_rounded,
                           iconColor: const Color(0xFF5B67CA),
                           title: 'تعديل البيانات الشخصية',
-                          tagPill: ProfileCompletion.of(user).isComplete
+                          tagPill: !isShopper ||
+                                  ProfileCompletion.of(user).isComplete
                               ? null
                               : 'أكمل ملفك التعريفي',
                           tagColor: AppColors.goldInk,
@@ -87,22 +92,24 @@ class ProfileScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        _buildDivider(context),
-                        _buildListTile(
-                          context,
-                          icon: Icons.location_on_outlined,
-                          iconColor: AppColors.brandGreen,
-                          title: 'عناويني',
-                          tagPill: user.defaultAddress == null
-                              ? 'أضف عنوان الشحن'
-                              : null,
-                          tagColor: AppColors.goldInk,
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const MyAddressesScreen(),
+                        if (isShopper) ...[
+                          _buildDivider(context),
+                          _buildListTile(
+                            context,
+                            icon: Icons.location_on_outlined,
+                            iconColor: AppColors.brandGreen,
+                            title: 'عناويني',
+                            tagPill: user.defaultAddress == null
+                                ? 'أضف عنوان الشحن'
+                                : null,
+                            tagColor: AppColors.goldInk,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const MyAddressesScreen(),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                         _buildDivider(context),
                         _buildListTile(
                           context,
@@ -270,24 +277,21 @@ class ProfileScreen extends StatelessWidget {
 
                     const SizedBox(height: 16),
 
-                    // 5. "Help & Support" Section Card
-                    _buildSectionHeader(context, 'المساعدة والاتصال'),
-                    const SizedBox(height: 6),
-                    _buildCardWrapper(context, [
-                      _buildListTile(
-                        context,
-                        icon: Icons.headset_mic_outlined,
-                        iconColor: const Color(0xFF27AE60),
-                        title: 'المساعدة والاتصال',
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const ChatScreen(),
-                          ),
+                    // 5. "Help & Support" Section Card (العميل: المساعد، البائع: تذاكر الدعم)
+                    if (_supportScreen(user) != null) ...[
+                      _buildSectionHeader(context, 'المساعدة والاتصال'),
+                      const SizedBox(height: 6),
+                      _buildCardWrapper(context, [
+                        _buildListTile(
+                          context,
+                          icon: Icons.headset_mic_outlined,
+                          iconColor: const Color(0xFF27AE60),
+                          title: 'المساعدة والاتصال',
+                          onTap: () => _openSupport(context, user),
                         ),
-                      ),
-                    ]),
-
-                    const SizedBox(height: 16),
+                      ]),
+                      const SizedBox(height: 16),
+                    ],
 
                     // 6. "Legal Information" Section Card
                     _buildSectionHeader(context, 'معلومات قانونية'),
@@ -382,9 +386,38 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, dynamic user) {
-    // نسبة إكمال حقيقية من بيانات الحساب (كانت 70% ثابتة لكل المستخدمين)
-    final completion = user is AppUser ? ProfileCompletion.of(user) : null;
+  /// الزائر والعميل فقط يتسوقون؛ البائع والمدير والموظف حسابات عمل.
+  static bool _isShopper(AppUser? user) =>
+      user == null || user.role == 'customer';
+
+  /// شاشة الدعم المناسبة للدور، أو null إن لم يكن له دعم (المدير والموظف).
+  static Widget? _supportScreen(AppUser? user) => switch (user?.role) {
+        null || 'customer' => const ChatScreen(),
+        'seller' => const SellerSupportScreen(),
+        _ => null,
+      };
+
+  void _openSupport(BuildContext context, AppUser? user) {
+    final screen = _supportScreen(user);
+    if (screen == null) {
+      return;
+    }
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+  }
+
+  static String? _roleLabel(String role) => switch (role) {
+        'seller' => 'حساب بائع',
+        'admin' => 'حساب مدير',
+        'employee' => 'حساب موظف',
+        _ => null,
+      };
+
+  Widget _buildHeader(BuildContext context, AppUser? user) {
+    // نسبة إكمال حقيقية من بيانات الحساب؛ للعميل فقط لأنها تشمل عنوان الشحن
+    final completion =
+        user != null && _isShopper(user) ? ProfileCompletion.of(user) : null;
+    final roleLabel = user == null ? null : _roleLabel(user.role);
+    final hasSupport = _supportScreen(user) != null;
     return Container(
       width: double.infinity,
       color: AppColors.brandGreen,
@@ -419,14 +452,15 @@ class ProfileScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              IconButton(
-                tooltip: context.tr('الدعم'),
-                icon: const Icon(Icons.headset_mic_outlined,
-                    color: Colors.white, size: 24),
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ChatScreen()),
-                ),
-              ),
+              if (hasSupport)
+                IconButton(
+                  tooltip: context.tr('الدعم'),
+                  icon: const Icon(Icons.headset_mic_outlined,
+                      color: Colors.white, size: 24),
+                  onPressed: () => _openSupport(context, user),
+                )
+              else
+                const SizedBox(width: 48),
             ],
           ),
 
@@ -443,18 +477,20 @@ class ProfileScreen extends StatelessWidget {
                     SizedBox(
                       width: 62,
                       height: 62,
-                      child: CircularProgressIndicator(
-                        value: completion!.ratio,
-                        strokeWidth: 3.5,
-                        backgroundColor: Colors.white24,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          completion.isComplete
-                              ? const Color(0xFF5CC8A0)
-                              : AppColors.gold,
-                        ),
-                        semanticsLabel: context.tr('اكتمال الملف الشخصي'),
-                        semanticsValue: '${completion.percent}',
-                      ),
+                      child: completion == null
+                          ? null
+                          : CircularProgressIndicator(
+                              value: completion.ratio,
+                              strokeWidth: 3.5,
+                              backgroundColor: Colors.white24,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                completion.isComplete
+                                    ? const Color(0xFF5CC8A0)
+                                    : AppColors.gold,
+                              ),
+                              semanticsLabel: context.tr('اكتمال الملف الشخصي'),
+                              semanticsValue: '${completion.percent}',
+                            ),
                     ),
                     ClipOval(
                       child: SizedBox(
@@ -482,7 +518,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                       ),
                     ),
-                    if (!completion.isComplete)
+                    if (completion != null && !completion.isComplete)
                       Positioned(
                         bottom: 0,
                         child: Container(
@@ -522,7 +558,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       AppText(
-                        user.email ?? user.phone ?? '',
+                        user.email ?? user.phone,
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 13,
@@ -534,7 +570,24 @@ class ProfileScreen extends StatelessWidget {
                         spacing: 8,
                         runSpacing: 6,
                         children: [
-                          if ((user as AppUser).isVerified)
+                          if (roleLabel != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: AppText(
+                                roleLabel,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          if (user.isVerified)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 3),
@@ -559,7 +612,7 @@ class ProfileScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-                          if (!completion.isComplete)
+                          if (completion != null && !completion.isComplete)
                             InkWell(
                               onTap: () => Navigator.of(context).push(
                                 MaterialPageRoute(

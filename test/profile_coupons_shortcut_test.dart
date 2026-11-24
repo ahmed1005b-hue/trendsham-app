@@ -80,4 +80,34 @@ void main() {
         find.byType(AlertDialog).evaluate().isNotEmpty ||
         find.byType(BottomSheet).evaluate().isNotEmpty, isTrue);
   });
+
+  for (final role in ['seller', 'admin', 'employee']) {
+    testWidgets('$role account page hides the shopping sections',
+        (tester) async {
+      final auth = AuthProvider()
+        ..updateUser(AppUser(
+          id: 2,
+          name: 'Staff',
+          firstName: 'Test',
+          lastName: 'Staff',
+          phone: '123',
+          role: role,
+        ));
+      await _pumpProfile(tester, auth);
+
+      for (final shoppingItem in [
+        'طلباتي',
+        'الكوبونات',
+        'المفضلة',
+        'المتاجر التي أتابعها',
+        'عناويني',
+        'كوبوناتي',
+        'أكمل ملفك التعريفي',
+      ]) {
+        expect(find.text(shoppingItem), findsNothing, reason: shoppingItem);
+      }
+      expect(find.text('تعديل البيانات الشخصية'), findsOneWidget);
+      expect(find.text('تسجيل الخروج'), findsOneWidget);
+    });
+  }
 }
