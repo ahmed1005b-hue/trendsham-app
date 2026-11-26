@@ -2070,5 +2070,10 @@
   "عملاء طلبوا التحدث مع موظف.": "Bir çalışanla konuşmak isteyen müşteriler.",
   "رسائل بائعين لم تُقرأ بعد.": "Henüz okunmamış satıcı mesajları.",
   "نزاعات إرجاع تحتاج قراراً. إرجاع المال يسجّله المدير.": "Karar bekleyen iade anlaşmazlıkları. Para iadesini yönetici kaydeder.",
-  "شغل اليوم: ما ينتظر تصرّفك الآن.": "Bugünün işleri: şu an sizi bekleyenler."
+  "شغل اليوم: ما ينتظر تصرّفك الآن.": "Bugünün işleri: şu an sizi bekleyenler.",
+  "سجل نشاط الفريق": "Ekip etkinlik kaydı",
+  "الشخص": "Kişi",
+  "مدير": "Yönetici",
+  "تعذّر تحميل السجل.": "Kayıt yüklenemedi.",
+  "لا يوجد نشاط مسجّل بهذه التصفية.": "Bu filtre için kayıtlı etkinlik yok."
 }

@@ -66,6 +66,42 @@ class AdminService {
         .toList();
   }
 
+  /// سجل نشاط الفريق (نفس صفحة الموقع): التصفية بالشخص ونوع العمل والتاريخ.
+  Future<StaffActivityPage> staffActivity(
+      {int? userId,
+      String? group,
+      String? from,
+      String? to,
+      int page = 1}) async {
+    final data = await _api.get('/admin/staff-activity', query: {
+      if (userId != null) 'user_id': '$userId',
+      if (group != null) 'group': group,
+      if (from != null) 'from': from,
+      if (to != null) 'to': to,
+      'page': '$page',
+    });
+    final map = Map<String, dynamic>.from(data as Map);
+    List<Map<String, dynamic>> list(String key) =>
+        (map[key] as List? ?? const [])
+            .whereType<Map>()
+            .map((m) => Map<String, dynamic>.from(m))
+            .toList();
+    final meta = Map<String, dynamic>.from(map['meta'] ?? const {});
+    return StaffActivityPage(
+      list('data').map(StaffActivityEntry.fromJson).toList(),
+      list('staff')
+          .map((m) => (
+                id: (m['id'] as num).toInt(),
+                name: '${m['name'] ?? ''}',
+                isAdmin: m['role'] == 'admin',
+              ))
+          .toList(),
+      list('groups').map((m) => ('${m['value']}', '${m['label']}')).toList(),
+      (meta['current_page'] as num?)?.toInt() ?? 1,
+      (meta['last_page'] as num?)?.toInt() ?? 1,
+    );
+  }
+
   Future<void> approveEmployee(int id) async {
     await _api.post('/admin/employees/$id/approve');
   }
@@ -314,4 +350,44 @@ class AdminService {
   Future<void> archiveEmployeeOrder(int id) async {
     await _api.post('/employee/orders/$id/archive');
   }
+}
+
+/// سطر في سجل نشاط الفريق.
+class StaffActivityEntry {
+  const StaffActivityEntry({
+    required this.id,
+    required this.actorName,
+    required this.isAdmin,
+    required this.action,
+    required this.description,
+    this.createdAt,
+  });
+
+  factory StaffActivityEntry.fromJson(Map<String, dynamic> json) =>
+      StaffActivityEntry(
+        id: (json['id'] as num).toInt(),
+        actorName: '${json['actor_name'] ?? ''}',
+        isAdmin: json['actor_role'] == 'admin',
+        action: '${json['action'] ?? ''}',
+        description: '${json['description'] ?? ''}',
+        createdAt: DateTime.tryParse('${json['created_at'] ?? ''}')?.toLocal(),
+      );
+
+  final int id;
+  final String actorName;
+  final bool isAdmin;
+  final String action;
+  final String description;
+  final DateTime? createdAt;
+}
+
+class StaffActivityPage {
+  const StaffActivityPage(
+      this.entries, this.staff, this.groups, this.currentPage, this.lastPage);
+
+  final List<StaffActivityEntry> entries;
+  final List<({int id, String name, bool isAdmin})> staff;
+  final List<(String, String)> groups;
+  final int currentPage;
+  final int lastPage;
 }

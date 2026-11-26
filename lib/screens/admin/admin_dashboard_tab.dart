@@ -10,6 +10,7 @@ import 'admin_stories_screen.dart';
 import 'admin_settings_screen.dart';
 import 'admin_categories_screen.dart';
 import 'admin_employees_screen.dart';
+import 'admin_staff_activity_screen.dart';
 import 'admin_accounting_screen.dart';
 import 'admin_analytics_screen.dart';
 import 'admin_daily_deals_screen.dart';
@@ -224,6 +225,10 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
               icon: Icons.badge_outlined,
               label: 'الموظفون',
               onTap: () => open(const AdminEmployeesScreen())),
+          _quickAccessTile(context,
+              icon: Icons.history,
+              label: 'سجل نشاط الفريق',
+              onTap: () => open(const AdminStaffActivityScreen())),
           _quickAccessTile(context,
               icon: Icons.support_agent,
               label: 'دعم البائعين',
