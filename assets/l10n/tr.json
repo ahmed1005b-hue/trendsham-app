@@ -2056,5 +2056,8 @@
   "لحماية لوحة الإدارة: عند الدخول يُطلب رمز من تطبيق المصادقة على هاتفك (مثل Google Authenticator).": "Yönetim panelini korumak için: girişte telefonunuzdaki kimlik doğrulama uygulamasından (ör. Google Authenticator) kod istenir.",
   "لم نجد تطبيق مصادقة على هاتفك. ثبّت Google Authenticator ثم جرّب مرة أخرى، أو انسخ الرمز السري.": "Telefonunuzda kimlik doğrulama uygulaması bulunamadı. Google Authenticator yükleyip tekrar deneyin veya gizli anahtarı kopyalayın.",
   "مفعّل": "Etkin",
-  "نسخ الرموز": "Kodları kopyala"
+  "نسخ الرموز": "Kodları kopyala",
+  "حساب بائع": "Satıcı hesabı",
+  "حساب مدير": "Yönetici hesabı",
+  "حساب موظف": "Çalışan hesabı"
 }

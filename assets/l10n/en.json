@@ -2056,5 +2056,8 @@
   "لحماية لوحة الإدارة: عند الدخول يُطلب رمز من تطبيق المصادقة على هاتفك (مثل Google Authenticator).": "To protect the admin panel: signing in asks for a code from the authenticator app on your phone (such as Google Authenticator).",
   "لم نجد تطبيق مصادقة على هاتفك. ثبّت Google Authenticator ثم جرّب مرة أخرى، أو انسخ الرمز السري.": "We couldn't find an authenticator app on your phone. Install Google Authenticator and try again, or copy the secret key.",
   "مفعّل": "Enabled",
-  "نسخ الرموز": "Copy codes"
+  "نسخ الرموز": "Copy codes",
+  "حساب بائع": "Seller account",
+  "حساب مدير": "Admin account",
+  "حساب موظف": "Employee account"
 }
