@@ -363,7 +363,8 @@ class AdminService {
     final prefix = employeeMode ? '/employee' : '/admin';
     final data = await _api.put('$prefix/orders/$id/status', body: {
       'status': status,
-      if (trackingNumber != null && trackingNumber.isNotEmpty)
+      // الموظف لا يرى حقل رقم التتبع، والخادم لا يقبله منه
+      if (!employeeMode && trackingNumber != null && trackingNumber.isNotEmpty)
         'tracking_number': trackingNumber,
     });
     return Order.fromJson(data['data'] ?? data);
