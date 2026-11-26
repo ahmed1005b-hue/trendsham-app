@@ -10,14 +10,25 @@ import '../../widgets/app_state_message.dart';
 /// المساعد الذكي للمدير (نفس صفحات الموقع): محادثات حوّلها العملاء لموظف،
 /// والأسئلة الشائعة التي يجيب منها المساعد.
 class AdminAssistantScreen extends StatelessWidget {
-  const AdminAssistantScreen({super.key, this.service});
+  const AdminAssistantScreen(
+      {super.key, this.service, this.employeeMode = false});
 
   /// للاختبار: خدمة بديلة بلا شبكة
   final AdminToolsService? service;
 
+  /// الموظف: محادثات العملاء فقط، والأسئلة الشائعة يديرها المدير.
+  final bool employeeMode;
+
   @override
   Widget build(BuildContext context) {
-    final s = service ?? AdminToolsService();
+    final s = service ??
+        (employeeMode ? AdminToolsService.employee() : AdminToolsService());
+    if (employeeMode) {
+      return Scaffold(
+        appBar: AppBar(title: const AppText('محادثات العملاء')),
+        body: _ChatsTab(service: s),
+      );
+    }
     return DefaultTabController(
       length: 2,
       child: Scaffold(

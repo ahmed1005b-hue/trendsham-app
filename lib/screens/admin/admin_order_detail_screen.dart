@@ -28,6 +28,12 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
   Order? _order;
   String? _error;
 
+  static const _employeeStatuses = {
+    'processing',
+    'shipped',
+    'delivered',
+    'cancelled'
+  };
   String _selectedStatus = 'pending';
   final TextEditingController _trackingController = TextEditingController();
   bool _isUpdating = false;
@@ -377,7 +383,13 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                   decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 12)),
-                  items: Order.statusLabels.entries.map((e) {
+                  // الموظف: لا «مدفوع» ولا رجوع للمراجعة (نفس قواعد الخادم)
+                  items: Order.statusLabels.entries
+                      .where((e) =>
+                          !widget.employeeMode ||
+                          e.key == _selectedStatus ||
+                          _employeeStatuses.contains(e.key))
+                      .map((e) {
                     return DropdownMenuItem(
                         value: e.key, child: AppText(e.value));
                   }).toList(),

@@ -2059,5 +2059,16 @@
   "نسخ الرموز": "Kodları kopyala",
   "حساب بائع": "Satıcı hesabı",
   "حساب مدير": "Yönetici hesabı",
-  "حساب موظف": "Çalışan hesabı"
+  "حساب موظف": "Çalışan hesabı",
+  "لوحة الموظف": "Çalışan paneli",
+  "تعذّر تحميل شغل اليوم.": "Bugünün işleri yüklenemedi.",
+  "طلبات وصلت للبائعين ولم تُجهَّز بعد.": "Satıcılara ulaşan ve henüz hazırlanmayan siparişler.",
+  "طلبات متأخرة": "Geciken siparişler",
+  "طلبات لم تُشحن منذ أيام.": "Günlerdir kargolanmayan siparişler.",
+  "منتجات تنتظر المراجعة": "İnceleme bekleyen ürünler",
+  "اقبلها أو ارفضها مع ذكر السبب.": "Gerekçesiyle onaylayın veya reddedin.",
+  "عملاء طلبوا التحدث مع موظف.": "Bir çalışanla konuşmak isteyen müşteriler.",
+  "رسائل بائعين لم تُقرأ بعد.": "Henüz okunmamış satıcı mesajları.",
+  "نزاعات إرجاع تحتاج قراراً. إرجاع المال يسجّله المدير.": "Karar bekleyen iade anlaşmazlıkları. Para iadesini yönetici kaydeder.",
+  "شغل اليوم: ما ينتظر تصرّفك الآن.": "Bugünün işleri: şu an sizi bekleyenler."
 }

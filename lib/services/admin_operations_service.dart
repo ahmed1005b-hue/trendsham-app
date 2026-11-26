@@ -10,17 +10,24 @@ List<Map<String, dynamic>> _list(dynamic data, [String key = 'data']) {
       : <Map<String, dynamic>>[];
 }
 
-Map<String, dynamic> _item(dynamic data) =>
-    data is Map && data['data'] is Map
-        ? Map<String, dynamic>.from(data['data'] as Map)
-        : <String, dynamic>{};
+Map<String, dynamic> _item(dynamic data) => data is Map && data['data'] is Map
+    ? Map<String, dynamic>.from(data['data'] as Map)
+    : <String, dynamic>{};
 
 /// عمليات المدير المقابلة لصفحات الويب: الشحن، الدفع اليدوي، عروض اليوم،
 /// مساحات العرض، دعم البائعين، التقارير والمحاسبة.
 class AdminOperationsService {
-  AdminOperationsService({ApiClient? api}) : _api = api ?? ApiClient();
+  AdminOperationsService({ApiClient? api, this.supportBase = '/admin'})
+      : _api = api ?? ApiClient();
+
+  /// الموظف يستعمل نفس شاشات الدعم تحت '/employee'.
+  AdminOperationsService.employee({ApiClient? api})
+      : this(api: api, supportBase: '/employee');
 
   final ApiClient _api;
+
+  /// بادئة مسارات دعم البائعين: '/admin' للمدير و'/employee' للموظف.
+  final String supportBase;
 
   // ===== شركات الشحن + شحنة الطلب =====
   Future<List<Map<String, dynamic>>> shippingCompanies() async =>
@@ -45,22 +52,22 @@ class AdminOperationsService {
     int? shippingCompanyId,
     String? trackingNumber,
   }) async {
-    final data = await _api.put('/admin/orders/$orderId/shipments/$shipmentId',
-        body: {
-          'status': status,
-          'shipping_company_id': shippingCompanyId,
-          'tracking_number': trackingNumber,
-        });
+    final data =
+        await _api.put('/admin/orders/$orderId/shipments/$shipmentId', body: {
+      'status': status,
+      'shipping_company_id': shippingCompanyId,
+      'tracking_number': trackingNumber,
+    });
     return Order.fromJson(data['data'] ?? data);
   }
 
   // ===== الدفع اليدوي =====
   Future<Order> markPaid(int orderId, {String? transactionRef}) async {
-    final data = await _api.post('/admin/orders/$orderId/payment/mark-paid',
-        body: {
-          if (transactionRef != null && transactionRef.isNotEmpty)
-            'transaction_ref': transactionRef,
-        });
+    final data =
+        await _api.post('/admin/orders/$orderId/payment/mark-paid', body: {
+      if (transactionRef != null && transactionRef.isNotEmpty)
+        'transaction_ref': transactionRef,
+    });
     return Order.fromJson(data['data'] ?? data);
   }
 
@@ -129,18 +136,18 @@ class AdminOperationsService {
 
   // ===== دعم البائعين =====
   Future<List<Map<String, dynamic>>> supportConversations() async =>
-      _list(await _api.get('/admin/support'), 'conversations');
+      _list(await _api.get('$supportBase/support'), 'conversations');
 
   Future<Map<String, dynamic>> supportConversation(int id) async {
-    final data = await _api.get('/admin/support/$id');
+    final data = await _api.get('$supportBase/support/$id');
     return data is Map ? Map<String, dynamic>.from(data) : {};
   }
 
   Future<void> replySupport(int id, String body) =>
-      _api.post('/admin/support/$id/message', body: {'body': body});
+      _api.post('$supportBase/support/$id/message', body: {'body': body});
 
   Future<void> setSupportOpen(int id, bool open) =>
-      _api.post('/admin/support/$id/${open ? 'reopen' : 'close'}');
+      _api.post('$supportBase/support/$id/${open ? 'reopen' : 'close'}');
 
   // ===== التقارير =====
   Future<Map<String, dynamic>> report(DateTime from, DateTime to) async {

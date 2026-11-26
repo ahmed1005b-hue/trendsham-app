@@ -1,4 +1,4 @@
-﻿import 'package:image_picker/image_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import '../models/category.dart';
 import '../models/product.dart';
@@ -301,6 +301,14 @@ class AdminService {
         'tracking_number': trackingNumber,
     });
     return Order.fromJson(data['data'] ?? data);
+  }
+
+  /// شغل اليوم للموظف: نفس أرقام صفحته الرئيسية في الموقع.
+  Future<Map<String, int>> employeeDashboard() async {
+    final data = await _api.get('/employee/dashboard');
+    final counts = Map<String, dynamic>.from(data['data'] ?? const {});
+    return counts
+        .map((key, value) => MapEntry(key, (value as num?)?.toInt() ?? 0));
   }
 
   Future<void> archiveEmployeeOrder(int id) async {

@@ -2059,5 +2059,16 @@
   "نسخ الرموز": "Copy codes",
   "حساب بائع": "Seller account",
   "حساب مدير": "Admin account",
-  "حساب موظف": "Employee account"
+  "حساب موظف": "Employee account",
+  "لوحة الموظف": "Staff dashboard",
+  "تعذّر تحميل شغل اليوم.": "Couldn't load today's work.",
+  "طلبات وصلت للبائعين ولم تُجهَّز بعد.": "Orders sent to sellers and not prepared yet.",
+  "طلبات متأخرة": "Late orders",
+  "طلبات لم تُشحن منذ أيام.": "Orders not shipped for days.",
+  "منتجات تنتظر المراجعة": "Products awaiting review",
+  "اقبلها أو ارفضها مع ذكر السبب.": "Approve or reject them with a reason.",
+  "عملاء طلبوا التحدث مع موظف.": "Customers who asked to talk to a staff member.",
+  "رسائل بائعين لم تُقرأ بعد.": "Seller messages not read yet.",
+  "نزاعات إرجاع تحتاج قراراً. إرجاع المال يسجّله المدير.": "Return disputes that need a decision. The admin records refunds.",
+  "شغل اليوم: ما ينتظر تصرّفك الآن.": "Today's work: what needs your action now."
 }

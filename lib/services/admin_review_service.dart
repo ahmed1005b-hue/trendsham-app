@@ -155,7 +155,15 @@ class SellerCouponsPage {
 
 /// ديون المتاجر، والمرتجعات، ومراجعة كوبونات البائعين للمدير (نفس صفحات الموقع).
 class AdminReviewService {
+  AdminReviewService({this.returnsBase = '/admin'});
+
+  /// الموظف يقرر في المرتجعات تحت '/employee' (إرجاع المال للمدير وحده).
+  AdminReviewService.employee() : this(returnsBase: '/employee');
+
   final ApiClient _api = ApiClient();
+
+  /// بادئة مسارات المرتجعات: '/admin' للمدير و'/employee' للموظف.
+  final String returnsBase;
 
   Map<String, dynamic> _map(dynamic data) =>
       Map<String, dynamic>.from(data as Map);
@@ -183,7 +191,8 @@ class AdminReviewService {
 
   // ===== المرتجعات =====
   Future<AdminReturnsPage> returns({String tab = 'escalated'}) async {
-    final data = _map(await _api.get('/admin/returns', query: {'tab': tab}));
+    final data =
+        _map(await _api.get('$returnsBase/returns', query: {'tab': tab}));
     final counts = Map<String, dynamic>.from(data['counts'] ?? {});
     return AdminReturnsPage(
       (data['data'] as List? ?? const [])
@@ -196,12 +205,12 @@ class AdminReviewService {
   }
 
   Future<AdminReturn> showReturn(int id) async =>
-      AdminReturn.fromJson(_map(await _api.get('/admin/returns/$id')));
+      AdminReturn.fromJson(_map(await _api.get('$returnsBase/returns/$id')));
 
   Future<AdminReturn> _returnAction(int id, String action,
           [Map<String, dynamic>? body]) async =>
-      AdminReturn.fromJson(
-          _map(await _api.post('/admin/returns/$id/$action', body: body)));
+      AdminReturn.fromJson(_map(
+          await _api.post('$returnsBase/returns/$id/$action', body: body)));
 
   Future<AdminReturn> approveReturn(int id, {String? note}) =>
       _returnAction(id, 'approve', {if ((note ?? '').isNotEmpty) 'note': note});

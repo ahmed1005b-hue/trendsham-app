@@ -167,7 +167,15 @@ class TwoFactorStatus {
 
 /// المحذوفات، والمساعد الذكي، وأمان حساب المدير (نفس صفحات الموقع).
 class AdminToolsService {
+  AdminToolsService({this.chatsBase = '/admin'});
+
+  /// الموظف يرد على محادثات العملاء تحت '/employee'.
+  AdminToolsService.employee() : this(chatsBase: '/employee');
+
   final ApiClient _api = ApiClient();
+
+  /// بادئة مسارات محادثات العملاء: '/admin' للمدير و'/employee' للموظف.
+  final String chatsBase;
 
   Map<String, dynamic> _map(dynamic d) => Map<String, dynamic>.from(d as Map);
 
@@ -200,20 +208,20 @@ class AdminToolsService {
 
   // ===== المساعد: المحادثات =====
   Future<List<ChatSummary>> chats({bool closed = false}) async {
-    final d = _map(await _api.get('/admin/assistant-chats',
+    final d = _map(await _api.get('$chatsBase/assistant-chats',
         query: {if (closed) 'status': 'closed'}));
     return _list(d['data']).map(ChatSummary.fromJson).toList();
   }
 
-  Future<ChatThread> chat(int id) async =>
-      ChatThread.fromJson(_map(await _api.get('/admin/assistant-chats/$id')));
+  Future<ChatThread> chat(int id) async => ChatThread.fromJson(
+      _map(await _api.get('$chatsBase/assistant-chats/$id')));
 
   Future<ChatThread> reply(int id, String message) async => ChatThread.fromJson(
-      _map(await _api.post('/admin/assistant-chats/$id/reply',
+      _map(await _api.post('$chatsBase/assistant-chats/$id/reply',
           body: {'message': message})));
 
   Future<ChatThread> closeChat(int id) async => ChatThread.fromJson(
-      _map(await _api.post('/admin/assistant-chats/$id/close')));
+      _map(await _api.post('$chatsBase/assistant-chats/$id/close')));
 
   // ===== المساعد: الأسئلة الشائعة =====
   Future<List<AssistantFaq>> faqs() async {
