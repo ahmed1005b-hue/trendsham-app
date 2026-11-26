@@ -126,7 +126,9 @@ class _EmployeeHomeTabState extends State<EmployeeHomeTab> {
         const AppText('شغل اليوم: ما ينتظر تصرّفك الآن.',
             style: TextStyle(color: AppColors.muted)),
         const SizedBox(height: 12),
-        for (final tile in tiles) _buildTile(tile, counts[tile.key] ?? 0),
+        // الخادم يرسل أرقام أقسام الموظف فقط
+        for (final tile in tiles.where((t) => counts.containsKey(t.key)))
+          _buildTile(tile, counts[tile.key]!),
       ],
     );
   }

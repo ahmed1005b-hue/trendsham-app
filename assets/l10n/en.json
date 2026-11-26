@@ -2075,5 +2075,11 @@
   "الشخص": "Person",
   "مدير": "Admin",
   "تعذّر تحميل السجل.": "Couldn't load the log.",
-  "لا يوجد نشاط مسجّل بهذه التصفية.": "No activity recorded for this filter."
+  "لا يوجد نشاط مسجّل بهذه التصفية.": "No activity recorded for this filter.",
+  "تعذّر تحميل الموظفين.": "Couldn't load employees.",
+  "اختر قسماً واحداً على الأقل.": "Choose at least one section.",
+  "لا يوجد موظفون معتمدون بعد.": "No approved employees yet.",
+  "اختر لكل موظف الأقسام التي يعمل فيها. لا يرى الموظف غيرها في الموقع ولا في التطبيق.": "Choose the sections each employee works in. They see nothing else on the website or in the app.",
+  "طلبات الانضمام": "Join requests",
+  "أقسام الموظفين": "Employee sections"
 }

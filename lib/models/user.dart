@@ -1,4 +1,4 @@
-﻿import '../config/api_config.dart';
+import '../config/api_config.dart';
 import 'user_address.dart';
 
 class SellerProfileSummary {
@@ -46,9 +46,10 @@ class SellerProfileSummary {
       isIdentityVerified: json['is_identity_verified'] == true,
       identityReviewPending: json['identity_review_pending'] == true,
       identityType: json['identity_type']?.toString(),
-      identityVerifiedAt: DateTime.tryParse(json['identity_verified_at']?.toString() ?? ''),
-      identityDocumentSubmittedAt:
-          DateTime.tryParse(json['identity_document_submitted_at']?.toString() ?? ''),
+      identityVerifiedAt:
+          DateTime.tryParse(json['identity_verified_at']?.toString() ?? ''),
+      identityDocumentSubmittedAt: DateTime.tryParse(
+          json['identity_document_submitted_at']?.toString() ?? ''),
     );
   }
 }
@@ -77,6 +78,9 @@ class AppUser {
   final int addressesCount;
   final UserAddress? defaultAddress;
 
+  /// أقسام لوحة الموظف التي سمح بها المدير (null = كل الأقسام).
+  final List<String>? employeeSections;
+
   AppUser({
     required this.id,
     required this.name,
@@ -96,7 +100,12 @@ class AppUser {
     this.phoneVerified = false,
     this.addressesCount = 0,
     this.defaultAddress,
+    this.employeeSections,
   });
+
+  /// هل يعمل الموظف في هذا القسم؟ (orders, products, support, chats, returns)
+  bool canWorkOn(String section) =>
+      employeeSections == null || employeeSections!.contains(section);
 
   /// شارة "موثّق": هاتف موثّق، أو بائع وُثّقت هويته.
   bool get isVerified =>
@@ -133,16 +142,22 @@ class AppUser {
       birthDate: json['birth_date']?.toString(),
       city: json['city']?.toString(),
       gender: json['gender'] is String ? json['gender']?.toString() : null,
-      avatar:
-          json['avatar']?.toString() ?? json['avatar_url']?.toString() ?? json['profile_photo_path']?.toString(),
+      avatar: json['avatar']?.toString() ??
+          json['avatar_url']?.toString() ??
+          json['profile_photo_path']?.toString(),
       role: rawRole.trim().toLowerCase(),
       sellerProfile: json['seller_profile'] is Map
-          ? SellerProfileSummary.fromJson(Map<String, dynamic>.from(json['seller_profile'] as Map))
+          ? SellerProfileSummary.fromJson(
+              Map<String, dynamic>.from(json['seller_profile'] as Map))
           : null,
       phoneVerified: json['phone_verified'] == true,
       addressesCount: (json['addresses_count'] as num?)?.toInt() ?? 0,
       defaultAddress: json['default_address'] is Map
-          ? UserAddress.fromJson(Map<String, dynamic>.from(json['default_address'] as Map))
+          ? UserAddress.fromJson(
+              Map<String, dynamic>.from(json['default_address'] as Map))
+          : null,
+      employeeSections: json['employee_sections'] is List
+          ? (json['employee_sections'] as List).map((s) => '$s').toList()
           : null,
     );
   }

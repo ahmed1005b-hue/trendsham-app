@@ -102,6 +102,36 @@ class AdminService {
     );
   }
 
+  /// الموظفون المعتمدون وأقسام كل واحد.
+  Future<EmployeeTeam> employeeTeam() async {
+    final data = Map<String, dynamic>.from(
+        await _api.get('/admin/employees/team') as Map);
+    List<Map<String, dynamic>> list(String key) =>
+        (data[key] as List? ?? const [])
+            .whereType<Map>()
+            .map((m) => Map<String, dynamic>.from(m))
+            .toList();
+    return EmployeeTeam(
+      list('data')
+          .map((m) => (
+                id: (m['id'] as num).toInt(),
+                name: '${m['name'] ?? ''}',
+                sections: (m['sections'] as List? ?? const [])
+                    .map((s) => '$s')
+                    .toList(),
+              ))
+          .toList(),
+      list('sections').map((m) => ('${m['value']}', '${m['label']}')).toList(),
+    );
+  }
+
+  /// يحفظ أقسام الموظف ويعيد رسالة الخادم.
+  Future<String> updateEmployeeSections(int id, List<String> sections) async {
+    final data = await _api
+        .put('/admin/employees/$id/permissions', body: {'sections': sections});
+    return '${(data as Map)['message'] ?? ''}';
+  }
+
   Future<void> approveEmployee(int id) async {
     await _api.post('/admin/employees/$id/approve');
   }
@@ -390,4 +420,12 @@ class StaffActivityPage {
   final List<(String, String)> groups;
   final int currentPage;
   final int lastPage;
+}
+
+/// الفريق المعتمد وأقسام لوحة الموظف المتاحة.
+class EmployeeTeam {
+  const EmployeeTeam(this.members, this.sections);
+
+  final List<({int id, String name, List<String> sections})> members;
+  final List<(String, String)> sections;
 }

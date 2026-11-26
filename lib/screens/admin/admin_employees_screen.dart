@@ -4,6 +4,7 @@ import '../../config/theme.dart';
 import '../../services/admin_service.dart';
 import '../../services/api_exception.dart';
 import '../../widgets/app_state_message.dart';
+import 'admin_employee_sections_tab.dart';
 
 class AdminEmployeesScreen extends StatefulWidget {
   const AdminEmployeesScreen({super.key});
@@ -53,68 +54,84 @@ class _AdminEmployeesScreenState extends State<AdminEmployeesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const AppText('طلبات الموظفين')),
-      body: _error != null
-          ? AppStateMessage(
-              message: _error!, icon: Icons.error_outline, onRetry: _load)
-          : _employees == null
-              ? const LoadingIndicator()
-              : _employees!.isEmpty
-                  ? const AppStateMessage(
-                      message: 'لا توجد طلبات موظفين معلّقة.',
-                      icon: Icons.badge_outlined)
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      color: AppColors.primary,
-                      child: ListView.separated(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: _employees!.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final employee = _employees![index];
-                          return Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  AppText(employee['name']?.toString() ?? '',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  AppText(employee['phone']?.toString() ?? ''),
-                                  AppText(employee['email']?.toString() ?? ''),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: FilledButton(
-                                          onPressed: () => _review(
-                                            employee['id'] as int,
-                                            approve: true,
-                                          ),
-                                          child: const AppText('موافقة'),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: OutlinedButton(
-                                          onPressed: () => _review(
-                                            employee['id'] as int,
-                                            approve: false,
-                                          ),
-                                          child: const AppText('رفض'),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const AppText('الموظفون'),
+          bottom: const TabBar(tabs: [
+            Tab(child: AppText('طلبات الانضمام')),
+            Tab(
+                key: ValueKey('employees-tab-sections'),
+                child: AppText('أقسام الموظفين')),
+          ]),
+        ),
+        body: TabBarView(
+            children: [_pendingBody(), const AdminEmployeeSectionsTab()]),
+      ),
     );
+  }
+
+  Widget _pendingBody() {
+    return _error != null
+        ? AppStateMessage(
+            message: _error!, icon: Icons.error_outline, onRetry: _load)
+        : _employees == null
+            ? const LoadingIndicator()
+            : _employees!.isEmpty
+                ? const AppStateMessage(
+                    message: 'لا توجد طلبات موظفين معلّقة.',
+                    icon: Icons.badge_outlined)
+                : RefreshIndicator(
+                    onRefresh: _load,
+                    color: AppColors.primary,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: _employees!.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final employee = _employees![index];
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                AppText(employee['name']?.toString() ?? '',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)),
+                                AppText(employee['phone']?.toString() ?? ''),
+                                AppText(employee['email']?.toString() ?? ''),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: FilledButton(
+                                        onPressed: () => _review(
+                                          employee['id'] as int,
+                                          approve: true,
+                                        ),
+                                        child: const AppText('موافقة'),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () => _review(
+                                          employee['id'] as int,
+                                          approve: false,
+                                        ),
+                                        child: const AppText('رفض'),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
   }
 }

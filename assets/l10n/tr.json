@@ -2075,5 +2075,11 @@
   "الشخص": "Kişi",
   "مدير": "Yönetici",
   "تعذّر تحميل السجل.": "Kayıt yüklenemedi.",
-  "لا يوجد نشاط مسجّل بهذه التصفية.": "Bu filtre için kayıtlı etkinlik yok."
+  "لا يوجد نشاط مسجّل بهذه التصفية.": "Bu filtre için kayıtlı etkinlik yok.",
+  "تعذّر تحميل الموظفين.": "Çalışanlar yüklenemedi.",
+  "اختر قسماً واحداً على الأقل.": "En az bir bölüm seçin.",
+  "لا يوجد موظفون معتمدون بعد.": "Henüz onaylı çalışan yok.",
+  "اختر لكل موظف الأقسام التي يعمل فيها. لا يرى الموظف غيرها في الموقع ولا في التطبيق.": "Her çalışanın çalıştığı bölümleri seçin. Web sitesinde ve uygulamada başka bölüm görmez.",
+  "طلبات الانضمام": "Katılım istekleri",
+  "أقسام الموظفين": "Çalışan bölümleri"
 }
