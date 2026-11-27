@@ -409,6 +409,17 @@ class _SellerWalletScreenState extends State<SellerWalletScreen> {
                         fontWeight: FontWeight.w600),
                   ),
                 ],
+                // أرباح طلبات ما زالت في مدة الإرجاع: في الرصيد لكنها لا تُسحب بعد
+                if (widget.sellerId == null &&
+                    ((_data!['held_for_returns'] as double?) ?? 0) > 0) ...[
+                  const SizedBox(height: 4),
+                  AppText(
+                    'محجوز حتى تنتهي مدة الإرجاع: ${(_data!['held_for_returns'] as double).toStringAsFixed(0)} ل.س',
+                    key: const ValueKey('wallet-held-for-returns'),
+                    style:
+                        const TextStyle(fontSize: 12, color: AppColors.muted),
+                  ),
+                ],
               ],
             ),
           ),

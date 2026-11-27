@@ -361,6 +361,8 @@ class SellerService {
       'available': double.tryParse(
               (data['available'] ?? data['balance'] ?? 0).toString()) ??
           0,
+      'held_for_returns':
+          double.tryParse((data['held_for_returns'] ?? 0).toString()) ?? 0,
       'min_withdrawal':
           double.tryParse((data['min_withdrawal'] ?? 0).toString()) ?? 0,
       'default_method': data['default_method'] is Map

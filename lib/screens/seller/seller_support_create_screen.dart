@@ -17,12 +17,6 @@ class _SellerSupportCreateScreenState extends State<SellerSupportCreateScreen> {
   final TextEditingController _bodyController = TextEditingController();
   bool _loading = false;
   String? _error;
-  String _selectedStaffId = '1';
-
-  final List<Map<String, String>> _staffList = [
-    {'id': '1', 'name': 'الدعم الفني'},
-    {'id': '2', 'name': 'إدارة المنصة'},
-  ];
 
   @override
   void dispose() {
@@ -48,7 +42,6 @@ class _SellerSupportCreateScreenState extends State<SellerSupportCreateScreen> {
 
     try {
       await _service.createConversation(
-        staffId: int.parse(_selectedStaffId),
         subject: _subjectController.text.trim(),
         body: _bodyController.text.trim(),
       );
@@ -77,29 +70,8 @@ class _SellerSupportCreateScreenState extends State<SellerSupportCreateScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const AppText(
-                    'اختر الموظف',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedStaffId,
-                    items: _staffList
-                        .map((s) => DropdownMenuItem<String>(
-                              value: s['id'],
-                              child: AppText(s['name'] ?? ''),
-                            ))
-                        .toList(),
-                    onChanged: (v) {
-                      if (v != null) {
-                        setState(() {
-                          _selectedStaffId = v;
-                        });
-                      }
-                    },
-                    decoration: InputDecoration(
-                      border: const OutlineInputBorder(),
-                      labelText: context.tr('الموظف'),
-                    ),
+                    'تصل رسالتك لكل فريق الدعم، ويرد عليك أول موظف متاح.',
+                    style: TextStyle(color: AppColors.muted),
                   ),
                   const SizedBox(height: 16),
                   const AppText(

@@ -13,14 +13,12 @@ class SupportService {
         .toList();
   }
 
-  /// إنشاء محادثة دعم جديدة
+  /// إنشاء محادثة دعم جديدة: تصل لكل فريق الدعم (لا يُختار موظف بالاسم)
   Future<Map<String, dynamic>> createConversation({
-    required int staffId,
     required String subject,
     required String body,
   }) async {
     final data = await _api.post('/seller/support', body: {
-      'staff_id': staffId,
       'subject': subject,
       'body': body,
     });

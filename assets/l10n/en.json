@@ -2081,5 +2081,8 @@
   "لا يوجد موظفون معتمدون بعد.": "No approved employees yet.",
   "اختر لكل موظف الأقسام التي يعمل فيها. لا يرى الموظف غيرها في الموقع ولا في التطبيق.": "Choose the sections each employee works in. They see nothing else on the website or in the app.",
   "طلبات الانضمام": "Join requests",
-  "أقسام الموظفين": "Employee sections"
+  "أقسام الموظفين": "Employee sections",
+  "تصل رسالتك لكل فريق الدعم، ويرد عليك أول موظف متاح.": "Your message reaches the whole support team; the first available member replies.",
+  "محجوز حتى تنتهي مدة الإرجاع: ${(_data!['held_for_returns'] as double).toStringAsFixed(0)} ل.س": "Held until the return period ends: @{(_data!['held_for_returns'] as double).toStringAsFixed(0)} SYP",
+  "فريق الدعم": "Support team"
 }

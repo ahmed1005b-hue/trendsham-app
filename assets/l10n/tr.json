@@ -2081,5 +2081,8 @@
   "لا يوجد موظفون معتمدون بعد.": "Henüz onaylı çalışan yok.",
   "اختر لكل موظف الأقسام التي يعمل فيها. لا يرى الموظف غيرها في الموقع ولا في التطبيق.": "Her çalışanın çalıştığı bölümleri seçin. Web sitesinde ve uygulamada başka bölüm görmez.",
   "طلبات الانضمام": "Katılım istekleri",
-  "أقسام الموظفين": "Çalışan bölümleri"
+  "أقسام الموظفين": "Çalışan bölümleri",
+  "تصل رسالتك لكل فريق الدعم، ويرد عليك أول موظف متاح.": "Mesajınız tüm destek ekibine ulaşır; ilk müsait çalışan yanıtlar.",
+  "محجوز حتى تنتهي مدة الإرجاع: ${(_data!['held_for_returns'] as double).toStringAsFixed(0)} ل.س": "İade süresi bitene kadar bekletilen: @{(_data!['held_for_returns'] as double).toStringAsFixed(0)} SYP",
+  "فريق الدعم": "Destek ekibi"
 }
