@@ -125,6 +125,9 @@ class Product {
   final List<ProductVariant> variants;
   final bool isFavorited;
 
+  /// أُضيف حديثاً: بطاقته تحمل شارة «جديد» (من الخادم، مثل الموقع)
+  final bool isNew;
+
   /// نقاط الولاء المتوقعة لشراء قطعة (من صفحة المنتج فقط)
   final int willEarnPoints;
 
@@ -162,6 +165,7 @@ class Product {
     this.primaryImage,
     this.variants = const [],
     this.isFavorited = false,
+    this.isNew = false,
     this.willEarnPoints = 0,
     this.storeCoupons = const [],
     this.viewsCount = 0,
@@ -234,6 +238,7 @@ class Product {
       images: images,
       primaryImage: primaryImage,
       isFavorited: isFavorited,
+      isNew: isNew,
     );
   }
 
@@ -263,6 +268,7 @@ class Product {
     ProductImage? primaryImage,
     List<ProductVariant>? variants,
     bool? isFavorited,
+    bool? isNew,
     int? willEarnPoints,
     List<StoreCoupon>? storeCoupons,
     int? viewsCount,
@@ -299,6 +305,7 @@ class Product {
       primaryImage: primaryImage ?? this.primaryImage,
       variants: variants ?? this.variants,
       isFavorited: isFavorited ?? this.isFavorited,
+      isNew: isNew ?? this.isNew,
       willEarnPoints: willEarnPoints ?? this.willEarnPoints,
       storeCoupons: storeCoupons ?? this.storeCoupons,
       viewsCount: viewsCount ?? this.viewsCount,
@@ -392,6 +399,7 @@ class Product {
       primaryImage: normalizedPrimary,
       variants: parsedVariants,
       isFavorited: json['is_favorited'] == true,
+      isNew: json['is_new'] == true,
       willEarnPoints: _toInt(json['will_earn_points']) ?? 0,
       storeCoupons: StoreCoupon.listFrom(json['store_coupons']),
       viewsCount: _toInt(json['views_count']) ?? _toInt(json['views']) ?? 0,

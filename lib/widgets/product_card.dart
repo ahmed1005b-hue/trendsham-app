@@ -150,7 +150,7 @@ class _ProductCardState extends State<ProductCard> {
         closedBuilder: (context, openContainer) {
           return InkWell(
             onTap: openContainer,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             child: _buildCardContent(
               context,
               effectiveOnTap: openContainer,
@@ -166,7 +166,7 @@ class _ProductCardState extends State<ProductCard> {
         closedColor: Theme.of(context).colorScheme.surface,
         openColor: Theme.of(context).scaffoldBackgroundColor,
         closedShape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         transitionDuration: const Duration(milliseconds: 380),
         tappable: false,
       );
@@ -174,7 +174,7 @@ class _ProductCardState extends State<ProductCard> {
 
     return InkWell(
       onTap: widget.onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: _buildCardContent(
         context,
         effectiveOnTap: widget.onTap,
@@ -198,6 +198,11 @@ class _ProductCardState extends State<ProductCard> {
   }) {
     final safeIndex =
         urls.isEmpty ? 0 : _currentIndex.clamp(0, urls.length - 1);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // شارة واحدة في زاوية الصورة: عرض اليوم، أو نسبة الخصم، أو «جديد» (مثل الموقع)
+    final hasDiscount = discount != null && discount > 0;
+    final showNew = !deal && !hasDiscount && widget.product.isNew;
+    final hasBadge = deal || hasDiscount || showNew;
     return MouseRegion(
       onEnter: (_) {
         _userInteracting = true;
@@ -209,9 +214,10 @@ class _ProductCardState extends State<ProductCard> {
       },
       child: Container(
         key: const ValueKey('product-card-shell'),
+        padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
               color: Theme.of(context).colorScheme.outlineVariant, width: 0.8),
           boxShadow: [
@@ -228,284 +234,281 @@ class _ProductCardState extends State<ProductCard> {
                 constraints.maxHeight.isFinite && constraints.maxHeight > 0
                     ? constraints.maxHeight
                     : 280.0;
-            final imageHeight = totalHeight * 0.58;
+            final imageHeight = totalHeight * 0.55;
             final detailsHeight = totalHeight - imageHeight;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  height: imageHeight,
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: ColoredBox(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.transparent
-                              : Colors.white,
-                          child: urls.length <= 1
-                              ? GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  onTap: widget.onImageTap ?? effectiveOnTap,
-                                  onLongPress: widget.onImageLongPress,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8),
-                                    child: urls.isEmpty
-                                        ? _placeholder(context)
-                                        : CachedNetworkImage(
-                                            imageUrl: urls.first,
-                                            fit: BoxFit.contain,
-                                            alignment: Alignment.center,
-                                            filterQuality: FilterQuality.high,
-                                            errorWidget: (_, __, ___) =>
-                                                _placeholder(context),
-                                            placeholder: (_, __) =>
-                                                _placeholder(context),
-                                          ),
-                                  ),
-                                )
-                              : Listener(
-                                  onPointerDown: (_) {
-                                    _userInteracting = true;
-                                    _autoPlayTimer?.cancel();
-                                  },
-                                  onPointerUp: (_) {
-                                    _userInteracting = false;
-                                    _startAutoPlay(
-                                        initialDelay:
-                                            const Duration(milliseconds: 3200));
-                                  },
-                                  onPointerCancel: (_) {
-                                    _userInteracting = false;
-                                    _startAutoPlay(
-                                        initialDelay:
-                                            const Duration(milliseconds: 3200));
-                                  },
-                                  child: PageView.builder(
-                                    controller: _pageController,
-                                    physics: const PageScrollPhysics(
-                                        parent: BouncingScrollPhysics()),
-                                    itemCount: urls.length,
-                                    onPageChanged: (i) {
-                                      setState(() => _currentIndex = i);
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    height: imageHeight,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: ColoredBox(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.transparent
+                                    : Colors.white,
+                            child: urls.length <= 1
+                                ? GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: widget.onImageTap ?? effectiveOnTap,
+                                    onLongPress: widget.onImageLongPress,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: urls.isEmpty
+                                          ? _placeholder(context)
+                                          : CachedNetworkImage(
+                                              imageUrl: urls.first,
+                                              fit: BoxFit.contain,
+                                              alignment: Alignment.center,
+                                              filterQuality: FilterQuality.high,
+                                              errorWidget: (_, __, ___) =>
+                                                  _placeholder(context),
+                                              placeholder: (_, __) =>
+                                                  _placeholder(context),
+                                            ),
+                                    ),
+                                  )
+                                : Listener(
+                                    onPointerDown: (_) {
+                                      _userInteracting = true;
+                                      _autoPlayTimer?.cancel();
                                     },
-                                    itemBuilder: (context, index) {
-                                      return GestureDetector(
-                                        behavior: HitTestBehavior.translucent,
-                                        onTap:
-                                            widget.onImageTap ?? effectiveOnTap,
-                                        onLongPress: widget.onImageLongPress,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8),
-                                          child: CachedNetworkImage(
-                                            imageUrl: urls[index],
-                                            fit: BoxFit.contain,
-                                            alignment: Alignment.center,
-                                            filterQuality: FilterQuality.high,
-                                            errorWidget: (_, __, ___) =>
-                                                _placeholder(context),
-                                            placeholder: (_, __) =>
-                                                _placeholder(context),
-                                          ),
-                                        ),
-                                      );
+                                    onPointerUp: (_) {
+                                      _userInteracting = false;
+                                      _startAutoPlay(
+                                          initialDelay: const Duration(
+                                              milliseconds: 3200));
                                     },
+                                    onPointerCancel: (_) {
+                                      _userInteracting = false;
+                                      _startAutoPlay(
+                                          initialDelay: const Duration(
+                                              milliseconds: 3200));
+                                    },
+                                    child: PageView.builder(
+                                      controller: _pageController,
+                                      physics: const PageScrollPhysics(
+                                          parent: BouncingScrollPhysics()),
+                                      itemCount: urls.length,
+                                      onPageChanged: (i) {
+                                        setState(() => _currentIndex = i);
+                                      },
+                                      itemBuilder: (context, index) {
+                                        return GestureDetector(
+                                          behavior: HitTestBehavior.translucent,
+                                          onTap: widget.onImageTap ??
+                                              effectiveOnTap,
+                                          onLongPress: widget.onImageLongPress,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8),
+                                            child: CachedNetworkImage(
+                                              imageUrl: urls[index],
+                                              fit: BoxFit.contain,
+                                              alignment: Alignment.center,
+                                              filterQuality: FilterQuality.high,
+                                              errorWidget: (_, __, ___) =>
+                                                  _placeholder(context),
+                                              placeholder: (_, __) =>
+                                                  _placeholder(context),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
-                                ),
+                          ),
                         ),
-                      ),
-                      if (urls.length > 1) ...[
-                        PositionedDirectional(
-                            start: 2,
-                            top: 0,
-                            bottom: 18,
+                        if (urls.length > 1) ...[
+                          PositionedDirectional(
+                              start: 2,
+                              top: 0,
+                              bottom: 18,
+                              child: Center(
+                                  child: _navButton(
+                                      Icons.chevron_left_rounded,
+                                      () => _goTo(safeIndex - 1),
+                                      'الصورة السابقة'))),
+                          PositionedDirectional(
+                              end: 2,
+                              top: 0,
+                              bottom: 18,
+                              child: Center(
+                                  child: _navButton(
+                                      Icons.chevron_right_rounded,
+                                      () => _goTo(safeIndex + 1),
+                                      'الصورة التالية'))),
+                          Positioned(
+                            bottom: 6,
+                            left: 0,
+                            right: 0,
                             child: Center(
-                                child: _navButton(
-                                    Icons.chevron_left_rounded,
-                                    () => _goTo(safeIndex - 1),
-                                    'الصورة السابقة'))),
-                        PositionedDirectional(
-                            end: 2,
-                            top: 0,
-                            bottom: 18,
-                            child: Center(
-                                child: _navButton(
-                                    Icons.chevron_right_rounded,
-                                    () => _goTo(safeIndex + 1),
-                                    'الصورة التالية'))),
-                        Positioned(
-                          bottom: 6,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 7, vertical: 3),
-                              decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.38),
-                                  borderRadius: BorderRadius.circular(10)),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: List.generate(urls.length, (index) {
-                                  final active = safeIndex == index;
-                                  return AnimatedContainer(
-                                    duration: const Duration(milliseconds: 220),
-                                    width: active ? 9 : 4,
-                                    height: 4,
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 1.5),
-                                    decoration: BoxDecoration(
-                                        color: active
-                                            ? Colors.white
-                                            : Colors.white70,
-                                        borderRadius: BorderRadius.circular(2)),
-                                  );
-                                }),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 7, vertical: 3),
+                                decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.38),
+                                    borderRadius: BorderRadius.circular(10)),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: List.generate(urls.length, (index) {
+                                    final active = safeIndex == index;
+                                    return AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 220),
+                                      width: active ? 9 : 4,
+                                      height: 4,
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 1.5),
+                                      decoration: BoxDecoration(
+                                          color: active
+                                              ? Colors.white
+                                              : Colors.white70,
+                                          borderRadius:
+                                              BorderRadius.circular(2)),
+                                    );
+                                  }),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                      Positioned(
-                        top: 8,
-                        left: 8,
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            widget.onFavoriteTap?.call();
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.12),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2))
-                                ]),
-                            child: Icon(
-                                (widget.isFavorited ??
-                                        widget.product.isFavorited)
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                color: (widget.isFavorited ??
-                                        widget.product.isFavorited)
-                                    ? AppColors.danger
-                                    : Colors.grey.shade700,
-                                size: 18),
-                          ),
-                        ),
-                      ),
-                      if (deal)
+                        ],
                         Positioned(
                           top: 8,
-                          right: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 4),
-                            decoration: BoxDecoration(
-                                color: AppColors.sale,
-                                borderRadius: BorderRadius.circular(8)),
-                            child: AppText(
-                                widget.product.dealLabel ?? 'عرض اليوم',
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    height: 1)),
-                          ),
-                        ),
-                      if (widget.onCompareTap != null)
-                        Positioned(
-                            top: deal ? 38 : 8,
-                            right: 8,
-                            child: _toolButton(Icons.compare_arrows,
-                                widget.onCompareTap!, 'إضافة للمقارنة')),
-                      if (widget.onQuestionsTap != null)
-                        Positioned(
-                            bottom: urls.length > 1 ? 24 : 8,
-                            left: 6,
-                            child: _toolButton(Icons.help_outline,
-                                widget.onQuestionsTap!, 'أسئلة وأجوبة المنتج')),
-                      if (widget.onAddToCart != null)
-                        Positioned(
-                          bottom: urls.length > 1 ? 24 : 8,
-                          right: 6,
-                          child: Builder(
-                            builder: (btnContext) => Material(
-                              color: AppColors.brandGreen,
-                              shape: const CircleBorder(),
-                              elevation: 2,
-                              child: InkWell(
-                                customBorder: const CircleBorder(),
-                                onTap: () {
-                                  HapticFeedback.mediumImpact();
-                                  widget.onAddToCart!(
-                                      btnContext,
-                                      urls.isNotEmpty
-                                          ? urls[safeIndex]
-                                          : widget.product.primaryImage?.url,
-                                      specialPrice:
-                                          widget.product.displayPrice <
-                                                  widget.product.price
-                                              ? widget.product.displayPrice
-                                              : null,
-                                      discountPercentage: widget
-                                          .product.displayDiscountPercentage);
-                                },
-                                child: const SizedBox(
-                                    width: 30,
-                                    height: 30,
-                                    child: Icon(Icons.add_shopping_cart_rounded,
-                                        size: 16, color: Colors.white)),
-                              ),
+                          left: 8,
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              widget.onFavoriteTap?.call();
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                        color: Colors.black
+                                            .withValues(alpha: 0.12),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2))
+                                  ]),
+                              child: Icon(
+                                  (widget.isFavorited ??
+                                          widget.product.isFavorited)
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: (widget.isFavorited ??
+                                          widget.product.isFavorited)
+                                      ? AppColors.danger
+                                      : Colors.grey.shade700,
+                                  size: 18),
                             ),
                           ),
                         ),
-                    ],
+                        if (hasBadge)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              key: const ValueKey('product-card-badge'),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                  color: showNew
+                                      ? AppColors.brandGreen
+                                      : AppColors.sale,
+                                  borderRadius: BorderRadius.circular(8)),
+                              child: deal || showNew
+                                  ? AppText(
+                                      deal
+                                          ? (widget.product.dealLabel ??
+                                              'عرض اليوم')
+                                          : 'جديد',
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w900,
+                                          height: 1))
+                                  : Text('-$discount%',
+                                      textDirection: TextDirection.ltr,
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w900,
+                                          height: 1)),
+                            ),
+                          ),
+                        if (widget.onCompareTap != null)
+                          Positioned(
+                              top: hasBadge ? 38 : 8,
+                              right: 8,
+                              child: _toolButton(Icons.compare_arrows,
+                                  widget.onCompareTap!, 'إضافة للمقارنة')),
+                        if (widget.onQuestionsTap != null)
+                          Positioned(
+                              bottom: urls.length > 1 ? 24 : 8,
+                              left: 6,
+                              child: _toolButton(
+                                  Icons.help_outline,
+                                  widget.onQuestionsTap!,
+                                  'أسئلة وأجوبة المنتج')),
+                      ],
+                    ),
                   ),
                 ),
                 SizedBox(
                   height: detailsHeight,
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
                     child: SingleChildScrollView(
                       physics: const NeverScrollableScrollPhysics(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          AppText(
-                            widget.product.vendor?.storeName ??
-                                (widget.product.category?.localizedName(
-                                        Localizations.localeOf(context)
-                                            .languageCode) ??
-                                    widget.product.category?.name) ??
-                                'تريند شام',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w900,
-                              color: Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? AppColors.gold
-                                  : AppColors.brandGreen,
+                          Container(
+                            key: const ValueKey('product-card-store'),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.brandGreen.withValues(alpha: 0.28)
+                                  : const Color(0xFFE5F1EC),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: AppText(
+                              widget.product.vendor?.storeName ??
+                                  (widget.product.category?.localizedName(
+                                          Localizations.localeOf(context)
+                                              .languageCode) ??
+                                      widget.product.category?.name) ??
+                                  'تريند شام',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w900,
+                                color: isDark
+                                    ? const Color(0xFF7ED8A8)
+                                    : AppColors.brandGreen,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 4),
                           AppText(widget.product.name,
                               key: const ValueKey('product-card-name'),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                  fontSize: 11,
-                                  height: 1.15,
-                                  color: colorScheme.onSurfaceVariant)),
-                          const SizedBox(height: 4),
+                                  fontSize: 12,
+                                  height: 1.2,
+                                  fontWeight: FontWeight.w700,
+                                  color: colorScheme.onSurface)),
+                          const SizedBox(height: 3),
                           Row(children: [
                             const Icon(Icons.star_rounded,
                                 color: AppColors.gold, size: 11),
@@ -527,49 +530,87 @@ class _ProductCardState extends State<ProductCard> {
                                     fontSize: 11,
                                     color: colorScheme.onSurfaceVariant)),
                           ]),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Flexible(
-                                  child: AppText(widget.product.formattedPrice,
-                                      key: const ValueKey('product-card-price'),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w900,
-                                          color: Theme.of(context).brightness ==
-                                                  Brightness.dark
-                                              ? AppColors.gold
-                                              : AppColors.brandGreen))),
-                              if (discount != null && discount > 0) ...[
-                                const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 4, vertical: 2),
-                                  decoration: BoxDecoration(
-                                      color: AppColors.sale,
-                                      borderRadius: BorderRadius.circular(4)),
-                                  child: AppText('-%$discount',
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold)),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    AppText(widget.product.formattedPrice,
+                                        key: const ValueKey(
+                                            'product-card-price'),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w900,
+                                            color: priceColor)),
+                                    if (widget
+                                            .product.formattedCompareAtPrice !=
+                                        null)
+                                      AppText(
+                                          widget
+                                              .product.formattedCompareAtPrice!,
+                                          key: const ValueKey(
+                                              'product-card-compare-price'),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                              fontSize: 11,
+                                              color:
+                                                  colorScheme.onSurfaceVariant,
+                                              decoration:
+                                                  TextDecoration.lineThrough)),
+                                  ],
                                 ),
-                              ],
+                              ),
+                              if (widget.onAddToCart != null)
+                                Builder(
+                                  builder: (btnContext) => Semantics(
+                                    button: true,
+                                    label: 'أضف للسلة',
+                                    child: Material(
+                                      key: const ValueKey(
+                                          'product-card-add-to-cart'),
+                                      color: isDark
+                                          ? const Color(0xFF5CC8A0)
+                                          : AppColors.brandGreen,
+                                      borderRadius: BorderRadius.circular(11),
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(11),
+                                        onTap: () {
+                                          HapticFeedback.mediumImpact();
+                                          widget.onAddToCart!(
+                                              btnContext,
+                                              urls.isNotEmpty
+                                                  ? urls[safeIndex]
+                                                  : widget.product.primaryImage
+                                                      ?.url,
+                                              specialPrice: widget.product
+                                                          .displayPrice <
+                                                      widget.product.price
+                                                  ? widget.product.displayPrice
+                                                  : null,
+                                              discountPercentage: widget.product
+                                                  .displayDiscountPercentage);
+                                        },
+                                        child: SizedBox(
+                                            width: 36,
+                                            height: 36,
+                                            child: Icon(Icons.add_rounded,
+                                                size: 22,
+                                                color: isDark
+                                                    ? const Color(0xFF0B1A15)
+                                                    : Colors.white)),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
-                          if (widget.product.formattedCompareAtPrice !=
-                              null) ...[
-                            const SizedBox(height: 1),
-                            AppText(widget.product.formattedCompareAtPrice!,
-                                key: const ValueKey(
-                                    'product-card-compare-price'),
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    color: colorScheme.onSurfaceVariant,
-                                    decoration: TextDecoration.lineThrough)),
-                          ],
                         ],
                       ),
                     ),

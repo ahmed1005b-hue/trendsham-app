@@ -65,6 +65,105 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  Future<void> pumpCard(WidgetTester tester, Product product,
+      {VoidCallback? onAdd}) async {
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('ar'),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: SizedBox(
+          width: 170,
+          height: 280,
+          child: ProductCard(
+            product: product,
+            onTap: () {},
+            onAddToCart: onAdd == null
+                ? null
+                : (_, __, {specialPrice, discountPercentage}) => onAdd(),
+          ),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('a discounted card shows the discount on the image corner',
+      (tester) async {
+    await pumpCard(
+      tester,
+      Product(
+        id: 5,
+        slug: 'sale',
+        name: 'منتج بخصم',
+        price: 80,
+        compareAtPrice: 100,
+        discountPercentage: 20,
+        stockQuantity: 3,
+        inStock: true,
+        reviewsCount: 0,
+        isNew: true,
+      ),
+    );
+
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('product-card-badge')),
+            matching: find.text('-20%')),
+        findsOneWidget);
+    expect(find.text('جديد'), findsNothing); // الخصم أولى من «جديد»
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a new card without a discount shows the New badge',
+      (tester) async {
+    await pumpCard(
+      tester,
+      Product(
+        id: 6,
+        slug: 'fresh',
+        name: 'منتج جديد',
+        price: 90,
+        stockQuantity: 3,
+        inStock: true,
+        reviewsCount: 0,
+        isNew: true,
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('product-card-badge')), findsOneWidget);
+    expect(find.text('جديد'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the plus button beside the price adds the product to the cart',
+      (tester) async {
+    var added = 0;
+    await pumpCard(
+      tester,
+      Product(
+        id: 7,
+        slug: 'plain',
+        name: 'منتج عادي',
+        price: 90,
+        stockQuantity: 3,
+        inStock: true,
+        reviewsCount: 0,
+      ),
+      onAdd: () => added++,
+    );
+
+    expect(find.byKey(const ValueKey('product-card-badge')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('product-card-add-to-cart')));
+    expect(added, 1);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('store product card exposes Q&A and comparison actions',
       (tester) async {
     final product = Product(
@@ -211,15 +310,16 @@ void main() {
       final priceColor = Theme.of(context).brightness == Brightness.light
           ? AppColors.brandGreen
           : AppColors.gold;
-      Text renderedText(String key) =>
-          tester.widget<Text>(find.descendant(
-              of: find.byKey(ValueKey(key)), matching: find.byType(Text)));
+      Text renderedText(String key) => tester.widget<Text>(find.descendant(
+          of: find.byKey(ValueKey(key)), matching: find.byType(Text)));
       final itemName = renderedText('product-card-name');
       final reviewCount = renderedText('product-card-review-count');
       final price = renderedText('product-card-price');
       final compareAtPrice = renderedText('product-card-compare-price');
 
-      expect(itemName.style!.color, secondaryColor);
+      expect(itemName.style!.color, colorScheme.onSurface);
+      expect(contrastRatio(colorScheme.onSurface, background),
+          greaterThanOrEqualTo(4.5));
       expect(reviewCount.style!.color, secondaryColor);
       expect(compareAtPrice.style!.color, secondaryColor);
       expect(price.style!.color, priceColor);
