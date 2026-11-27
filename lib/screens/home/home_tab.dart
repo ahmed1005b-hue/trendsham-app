@@ -68,6 +68,7 @@ class _HomeTabState extends State<HomeTab> {
       widget.showcaseService ?? ShowcaseService();
 
   List<Product>? _products;
+  List<Product> _homeDeals = const [];
   List<ShowcaseData> _showcases = const [];
   List<Category>? _categories;
   List<StoryModel>? _stories;
@@ -84,6 +85,7 @@ class _HomeTabState extends State<HomeTab> {
   List<Product> get _deals {
     final dealProducts = _dailyDealProducts ?? const <Product>[];
     if (dealProducts.isNotEmpty) return dealProducts;
+    if (_homeDeals.isNotEmpty) return _homeDeals;
     final products = _products ?? const <Product>[];
     final actualDeals = products
         .where((product) =>
@@ -180,10 +182,12 @@ class _HomeTabState extends State<HomeTab> {
   Future<void> _loadProducts() async {
     if (mounted) setState(() => _productsError = null);
     try {
-      final products = await _productService.list(sort: 'newest');
+      final sections = await _productService.homeSections();
+      final products = sections.newArrivals;
       if (!mounted) return;
       setState(() {
         _products = products;
+        _homeDeals = sections.deals;
         _favoriteIds
           ..clear()
           ..addAll(products

@@ -26,6 +26,23 @@ class ProductService {
     return (data['data'] as List).map((p) => Product.fromJson(p)).toList();
   }
 
+  /// «وصل حديثاً» و«العروض» للرئيسية كما في الموقع: الأحدث مع حدّ لكل متجر،
+  /// حتى لا يحتل متجر واحد الرئيسية.
+  Future<({List<Product> newArrivals, List<Product> deals})>
+      homeSections() async {
+    final data = await _api.get('/home/products', withAuth: false);
+    List<Product> parse(Object? list) => list is List
+        ? list
+            .whereType<Map>()
+            .map((p) => Product.fromJson(Map<String, dynamic>.from(p)))
+            .toList()
+        : <Product>[];
+    return (
+      newArrivals: parse(data['new_arrivals']),
+      deals: parse(data['deals'])
+    );
+  }
+
   /// منتجات بأرقامها وبنفس الترتيب («شاهدته مؤخراً»). المخفي منها لا يعود.
   Future<List<Product>> byIds(List<int> ids) async {
     if (ids.isEmpty) return [];
@@ -41,32 +58,31 @@ class ProductService {
 
   /// عروض اليوم النشطة من جدول daily_deals — تُستخدم في الصفحة الرئيسية.
   Future<List<Product>> dailyDeals() async {
-    final data = await _api.get('/daily-deal',
-        withAuth: false, query: {'all': '1'});
+    final data =
+        await _api.get('/daily-deal', withAuth: false, query: {'all': '1'});
     final List list = data['deals'] is List ? data['deals'] as List : const [];
     return list
         .whereType<Map>()
         .where((deal) => deal['product'] is Map)
         .map((deal) {
-          final product =
-              Product.fromJson(Map<String, dynamic>.from(deal['product']));
-          final discounted =
-              double.tryParse((deal['discounted_price'] ?? '').toString());
-          final pctRaw = deal['discount_percentage'];
-          final pct = pctRaw is num
-              ? pctRaw.toInt()
-              : int.tryParse(pctRaw?.toString() ?? '');
-          final endsAtRaw = deal['ends_at']?.toString();
-          final endsAt = endsAtRaw == null ? null : DateTime.tryParse(endsAtRaw);
-          return discounted != null && discounted > 0
-              ? product.copyWithManualDeal(
-                  dealPrice: discounted,
-                  dealPercentage: pct,
-                  dealEndsAt: endsAt,
-                )
-              : product;
-        })
-        .toList();
+      final product =
+          Product.fromJson(Map<String, dynamic>.from(deal['product']));
+      final discounted =
+          double.tryParse((deal['discounted_price'] ?? '').toString());
+      final pctRaw = deal['discount_percentage'];
+      final pct = pctRaw is num
+          ? pctRaw.toInt()
+          : int.tryParse(pctRaw?.toString() ?? '');
+      final endsAtRaw = deal['ends_at']?.toString();
+      final endsAt = endsAtRaw == null ? null : DateTime.tryParse(endsAtRaw);
+      return discounted != null && discounted > 0
+          ? product.copyWithManualDeal(
+              dealPrice: discounted,
+              dealPercentage: pct,
+              dealEndsAt: endsAt,
+            )
+          : product;
+    }).toList();
   }
 
   Future<({List<ProductReview> reviews, int currentPage, int lastPage})>

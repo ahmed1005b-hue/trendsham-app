@@ -45,6 +45,24 @@ class _FakeProductService extends ProductService {
       [_saleProduct];
 
   @override
+  Future<({List<Product> newArrivals, List<Product> deals})>
+      homeSections() async => (
+            newArrivals: [
+              _saleProduct,
+              Product(
+                id: 2,
+                slug: 'other-store-lamp',
+                name: 'مصباح متجر آخر',
+                price: 18000,
+                stockQuantity: 2,
+                inStock: true,
+                reviewsCount: 0,
+              ),
+            ],
+            deals: [_saleProduct],
+          );
+
+  @override
   Future<List<Product>> dailyDeals() async => [_saleProduct];
 
   @override
@@ -235,6 +253,23 @@ void main() {
       greaterThanOrEqualTo(4.5),
     );
     expect(find.text('أحدث المنتجات'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('newest products come from the home sections like the website',
+      (tester) async {
+    await pumpHome(tester, _FakeCategoryService());
+
+    await tester.scrollUntilVisible(
+      find.text('مصباح متجر آخر'),
+      300,
+      scrollable: find
+          .descendant(
+              of: find.byType(CustomScrollView),
+              matching: find.byType(Scrollable))
+          .first,
+    );
+    expect(find.text('مصباح متجر آخر'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
