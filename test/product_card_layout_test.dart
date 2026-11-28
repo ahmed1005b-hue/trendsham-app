@@ -93,6 +93,103 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets(
+      'every card shows its whole content and images line up in a grid row',
+      (tester) async {
+    for (final width in [320.0, 360.0]) {
+      tester.view.physicalSize = Size(width, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final short = Product(
+        id: 11,
+        slug: 'short',
+        name: 'قلم',
+        price: 90,
+        stockQuantity: 3,
+        inStock: true,
+        reviewsCount: 0,
+        vendor: Vendor(id: 1, storeName: 'متجر'),
+      );
+      final long = Product(
+        id: 12,
+        slug: 'long',
+        name: 'حذاء جلد طبيعي إصدار محدود بتصميم كلاسيكي للمناسبات',
+        price: 150000,
+        compareAtPrice: 180000,
+        discountPercentage: 17,
+        stockQuantity: 3,
+        inStock: true,
+        reviewsCount: 12,
+        averageRating: 4.5,
+        vendor: Vendor(id: 2, storeName: 'متجر خليل للتجارة العامة'),
+      );
+
+      await tester.pumpWidget(MaterialApp(
+        locale: const Locale('ar'),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: GridView(
+            padding: const EdgeInsets.all(12),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.66, // أضيق شبكة: الرئيسية
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+            children: [
+              for (final product in [short, long])
+                ProductCard(
+                  key: ValueKey('card-${product.id}'),
+                  product: product,
+                  onTap: () {},
+                  onAddToCart: (_, __, {specialPrice, discountPercentage}) {},
+                ),
+            ],
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'width $width');
+
+      double imageHeight(int id) => tester
+          .getSize(find
+              .descendant(
+                  of: find.byKey(ValueKey('card-$id')),
+                  matching: find.byType(ClipRRect))
+              .first)
+          .height;
+      expect(imageHeight(11), imageHeight(12), reason: 'width $width');
+
+      for (final id in [11, 12]) {
+        final card = find.byKey(ValueKey('card-$id'));
+        final shell = tester.getRect(find.descendant(
+            of: card,
+            matching: find.byKey(const ValueKey('product-card-shell'))));
+        final button = tester.getRect(find.descendant(
+            of: card,
+            matching: find.byKey(const ValueKey('product-card-add-to-cart'))));
+        final price = tester.getRect(find.descendant(
+            of: card,
+            matching: find.byKey(const ValueKey('product-card-price'))));
+        expect(
+            shell.contains(button.bottomLeft) &&
+                shell.contains(button.topRight),
+            isTrue,
+            reason: 'card $id at width $width: the + button is cut off');
+        expect(price.bottom <= shell.bottom, isTrue,
+            reason: 'card $id at width $width: the price is cut off');
+      }
+    }
+  });
+
   testWidgets('a discounted card shows the discount on the image corner',
       (tester) async {
     await pumpCard(
