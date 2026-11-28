@@ -2152,5 +2152,20 @@
   "اختر الحالة الجديدة": "Choose the new status",
   "الحالة تتقدم للأمام فقط.": "The status only moves forward.",
   "أُلغي الطلب وسُجّل رد المال للزبون.": "The order was cancelled and the refund to the customer was recorded.",
-  "مُسترد": "Refunded"
+  "مُسترد": "Refunded",
+  "الطلبات الحالية": "Current orders",
+  "جديدة": "New",
+  "متأخرة": "Late",
+  "المؤرشفة": "Archived",
+  "رقم الطلب، اسم الزبون، الهاتف أو البريد": "Order number, customer name, phone or email",
+  "لا توجد طلبات تطابق البحث.": "No orders match the search.",
+  ":n متاجر": ":n stores",
+  "سبب إلغاء الطرد (يصل للزبون والبائع)": "Reason for cancelling the parcel (sent to the customer and seller)",
+  "سُلّم هذا الطرد فلا تتغيّر حالته. أي مشكلة بعد التسليم تكون بطلب إرجاع.": "This parcel was delivered, so its status cannot change. Any problem after delivery goes through a return request.",
+  "الزبون رفض الاستلام": "Customer refused delivery",
+  "الزبون رفض استلام الطرد؟ يُلغى الطرد وتعود كمياته، وتُسجَّل أجرة شحنه ديناً عليه ويُمنع من الدفع عند الاستلام شهراً.": "Did the customer refuse the parcel? The parcel is cancelled and its stock returns, its shipping fee is recorded as the customer's debt, and cash on delivery is blocked for a month.",
+  "سجّل الرفض": "Record refusal",
+  "سُجّل رفض الاستلام.": "The refused delivery was recorded.",
+  "رفض الزبون الاستلام": "The customer refused delivery",
+  "السجل الزمني للطلب": "Order timeline"
 }

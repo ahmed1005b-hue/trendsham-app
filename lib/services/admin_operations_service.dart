@@ -30,8 +30,11 @@ class AdminOperationsService {
   final String supportBase;
 
   // ===== شركات الشحن + شحنة الطلب =====
-  Future<List<Map<String, dynamic>>> shippingCompanies() async =>
-      _list(await _api.get('/admin/shipping-companies'));
+  Future<List<Map<String, dynamic>>> shippingCompanies(
+          {bool employeeMode = false}) async =>
+      _list(await _api.get(employeeMode
+          ? '/employee/shipping-companies'
+          : '/admin/shipping-companies'));
 
   Future<void> createShippingCompany(String name, {String? phone}) =>
       _api.post('/admin/shipping-companies', body: {
@@ -45,18 +48,23 @@ class AdminOperationsService {
   Future<void> deleteShippingCompany(int id) =>
       _api.delete('/admin/shipping-companies/$id');
 
+  /// [reason] إلزامي عند إلغاء الطرد ويصل للزبون والبائع.
   Future<Order> updateShipment(
     int orderId,
     int shipmentId, {
     required String status,
     int? shippingCompanyId,
     String? trackingNumber,
+    String? reason,
+    bool employeeMode = false,
   }) async {
+    final prefix = employeeMode ? '/employee' : '/admin';
     final data =
-        await _api.put('/admin/orders/$orderId/shipments/$shipmentId', body: {
+        await _api.put('$prefix/orders/$orderId/shipments/$shipmentId', body: {
       'status': status,
       'shipping_company_id': shippingCompanyId,
       'tracking_number': trackingNumber,
+      if (reason != null && reason.isNotEmpty) 'reason': reason,
     });
     return Order.fromJson(data['data'] ?? data);
   }

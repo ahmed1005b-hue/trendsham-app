@@ -83,13 +83,15 @@ class _EmployeeHomeTabState extends State<EmployeeHomeTab> {
           Icons.shopping_bag_outlined,
           'طلبات جديدة',
           'طلبات وصلت للبائعين ولم تُجهَّز بعد.',
-          () => _open(const AdminOrdersScreen(employeeMode: true))),
+          () => _open(
+              const AdminOrdersScreen(employeeMode: true, initialView: 'new'))),
       _WorkTile(
           'late_orders',
           Icons.hourglass_bottom,
           'طلبات متأخرة',
           'طلبات لم تُشحن منذ أيام.',
-          () => _open(const AdminOrdersScreen(employeeMode: true)),
+          () => _open(
+              const AdminOrdersScreen(employeeMode: true, initialView: 'late')),
           urgent: true),
       _WorkTile(
           'pending_products',

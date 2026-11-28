@@ -2152,5 +2152,20 @@
   "اختر الحالة الجديدة": "Yeni durumu seçin",
   "الحالة تتقدم للأمام فقط.": "Durum yalnızca ileri gider.",
   "أُلغي الطلب وسُجّل رد المال للزبون.": "Sipariş iptal edildi ve müşteriye iade kaydedildi.",
-  "مُسترد": "İade edildi"
+  "مُسترد": "İade edildi",
+  "الطلبات الحالية": "Güncel siparişler",
+  "جديدة": "Yeni",
+  "متأخرة": "Geciken",
+  "المؤرشفة": "Arşivlenen",
+  "رقم الطلب، اسم الزبون، الهاتف أو البريد": "Sipariş no, müşteri adı, telefon veya e-posta",
+  "لا توجد طلبات تطابق البحث.": "Aramayla eşleşen sipariş yok.",
+  ":n متاجر": ":n mağaza",
+  "سبب إلغاء الطرد (يصل للزبون والبائع)": "Paket iptal nedeni (müşteriye ve satıcıya iletilir)",
+  "سُلّم هذا الطرد فلا تتغيّر حالته. أي مشكلة بعد التسليم تكون بطلب إرجاع.": "Bu paket teslim edildi, durumu değiştirilemez. Teslimden sonraki her sorun iade talebiyle çözülür.",
+  "الزبون رفض الاستلام": "Müşteri teslim almayı reddetti",
+  "الزبون رفض استلام الطرد؟ يُلغى الطرد وتعود كمياته، وتُسجَّل أجرة شحنه ديناً عليه ويُمنع من الدفع عند الاستلام شهراً.": "Müşteri paketi reddetti mi? Paket iptal edilir ve stok geri döner, kargo ücreti müşteriye borç yazılır ve bir ay kapıda ödeme kapatılır.",
+  "سجّل الرفض": "Reddi kaydet",
+  "سُجّل رفض الاستلام.": "Teslim reddi kaydedildi.",
+  "رفض الزبون الاستلام": "Müşteri teslim almayı reddetti",
+  "السجل الزمني للطلب": "Sipariş zaman çizelgesi"
 }

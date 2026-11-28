@@ -140,6 +140,17 @@ class Shipment {
 
   bool get isOpen => status != 'cancelled' && status != 'returned';
 
+  /// خرج من المتجر: لا يُلغى بعدها (رفض استلام أو إرجاع). نفس قاعدة الخادم.
+  bool get hasShipped =>
+      ['shipped', 'in_transit', 'delivered'].contains(status);
+
+  /// مُسلَّم أو مغلق: لا تتغيّر حالته من أدوات الطرود.
+  bool get isLocked => !isOpen || status == 'delivered';
+
+  /// يُسجَّل عليه «الزبون رفض الاستلام»
+  bool get canRecordRefusal =>
+      !refused && (status == 'shipped' || status == 'in_transit');
+
   static const Map<String, String> statusLabels = {
     'pending': 'قيد المراجعة',
     'processing': 'قيد التجهيز',
@@ -171,6 +182,28 @@ class Shipment {
           : null,
     );
   }
+}
+
+/// حدث في السجل الزمني للطلب (صفحة المدير والموظف).
+class OrderTimelineEvent {
+  const OrderTimelineEvent(
+      {required this.kind, required this.text, this.at, this.by});
+
+  /// created | paid | shipped | delivered | refused | cancelled | return | staff
+  final String kind;
+  final String text;
+  final DateTime? at;
+  final String? by;
+
+  factory OrderTimelineEvent.fromJson(Map<String, dynamic> json) =>
+      OrderTimelineEvent(
+        kind: json['kind']?.toString() ?? '',
+        text: json['text']?.toString() ?? '',
+        at: json['at'] != null
+            ? DateTime.tryParse(json['at'].toString())
+            : null,
+        by: json['by']?.toString(),
+      );
 }
 
 class Order {
@@ -207,6 +240,12 @@ class Order {
   final List<Shipment> shipments;
   final DateTime? createdAt;
 
+  /// للمدير والموظف فقط: ما جرى على الطلب بالترتيب
+  final List<OrderTimelineEvent> timeline;
+
+  /// لماذا لا يُؤرشف الآن (null = جاهز للأرشفة أو مؤرشف)
+  final String? archiveBlocker;
+
   Order({
     required this.id,
     required this.orderNumber,
@@ -230,6 +269,8 @@ class Order {
     this.paymentMethod,
     this.shipments = const [],
     this.createdAt,
+    this.timeline = const [],
+    this.archiveBlocker,
   });
 
   static const Map<String, String> statusLabels = {
@@ -352,6 +393,11 @@ class Order {
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
+      timeline: (json['timeline'] as List<dynamic>? ?? const [])
+          .whereType<Map>()
+          .map((e) => OrderTimelineEvent.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
+      archiveBlocker: json['archive_blocker']?.toString(),
     );
   }
 }

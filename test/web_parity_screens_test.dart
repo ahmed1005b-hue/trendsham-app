@@ -21,7 +21,8 @@ class _FakeAdminOps extends AdminOperationsService {
   ];
 
   @override
-  Future<List<Map<String, dynamic>>> shippingCompanies() async =>
+  Future<List<Map<String, dynamic>>> shippingCompanies(
+          {bool employeeMode = false}) async =>
       List.of(companies);
 
   @override

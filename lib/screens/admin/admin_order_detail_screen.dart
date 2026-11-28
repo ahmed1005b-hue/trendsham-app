@@ -12,12 +12,14 @@ class AdminOrderDetailScreen extends StatefulWidget {
   final int orderId;
   final bool employeeMode;
   final AdminService? service;
+  final AdminOperationsService? operations;
 
   const AdminOrderDetailScreen({
     super.key,
     required this.orderId,
     this.employeeMode = false,
     this.service,
+    this.operations,
   });
 
   @override
@@ -26,7 +28,8 @@ class AdminOrderDetailScreen extends StatefulWidget {
 
 class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
   late final AdminService _service = widget.service ?? AdminService();
-  final AdminOperationsService _operations = AdminOperationsService();
+  late final AdminOperationsService _operations =
+      widget.operations ?? AdminOperationsService();
   Order? _order;
   String? _error;
 
@@ -52,6 +55,8 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
   };
   static const _shippedCancelMessage =
       'شُحن هذا الطلب فلا يُلغى. إن رفض الزبون الاستلام سجّل «رفض الاستلام» على الطرد، وإن استلمه فالإرجاع يكون بطلب إرجاع.';
+  static const _deliveredParcelMessage =
+      'سُلّم هذا الطرد فلا تتغيّر حالته. أي مشكلة بعد التسليم تكون بطلب إرجاع.';
   static const _paidCancelMessage =
       'هذا الطلب مدفوع، فيلغيه المدير مع تسجيل رد المال للزبون.';
   String? _selectedStatus;
@@ -210,11 +215,20 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
 
   Future<void> _editShipment(Order order, Shipment shipment) async {
     final companies = await _operations
-        .shippingCompanies()
+        .shippingCompanies(employeeMode: widget.employeeMode)
         .catchError((_) => <Map<String, dynamic>>[]);
     if (!mounted) return;
     final tracking = TextEditingController(text: shipment.trackingNumber ?? '');
+    final reason = TextEditingController();
     String status = shipment.status;
+    // نفس قواعد الخادم: المُسلَّم لا يتغيّر، والمشحون لا يُلغى (بل رفض الاستلام)
+    final statuses = Shipment.statusLabels.entries
+        .where((e) => e.key != 'returned' || shipment.status == 'returned')
+        .where((e) =>
+            e.key != 'cancelled' ||
+            !shipment.hasShipped ||
+            shipment.status == 'cancelled')
+        .toList();
     int? companyId = companies
         .where((c) => c['name'] == shipment.shippingCompany)
         .map((c) => (c['id'] as num).toInt())
@@ -232,18 +246,37 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<String>(
+                  key: const ValueKey('parcel-status'),
                   initialValue: Shipment.statusLabels.containsKey(status)
                       ? status
                       : 'pending',
                   decoration: InputDecoration(
                       labelText: AppLocalizations.of(context)
                           .translate('حالة الشحنة')),
-                  items: Shipment.statusLabels.entries
+                  items: statuses
                       .map((e) => DropdownMenuItem(
                           value: e.key, child: AppText(e.value)))
                       .toList(),
-                  onChanged: (v) => setDialog(() => status = v!),
+                  onChanged: shipment.isLocked
+                      ? null
+                      : (v) => setDialog(() => status = v!),
                 ),
+                if (shipment.status == 'delivered')
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: AppText(_deliveredParcelMessage,
+                        style: TextStyle(fontSize: 12, color: AppColors.muted)),
+                  ),
+                if (status == 'cancelled' && shipment.status != 'cancelled')
+                  TextField(
+                    key: const ValueKey('parcel-cancel-reason'),
+                    controller: reason,
+                    maxLength: 500,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                        labelText:
+                            context.tr('سبب إلغاء الطرد (يصل للزبون والبائع)')),
+                  ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<int?>(
                   initialValue: companyId,
@@ -279,13 +312,22 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                 onPressed: () => Navigator.pop(ctx, false),
                 child: const AppText('إلغاء')),
             FilledButton(
+                key: const ValueKey('parcel-save'),
                 onPressed: () => Navigator.pop(ctx, true),
                 child: const AppText('حفظ')),
           ],
         ),
       ),
     );
-    if (ok != true || shipment.id == null) return;
+    if (ok != true || shipment.id == null || !mounted) return;
+    final cancelReason = reason.text.trim();
+    if (status == 'cancelled' &&
+        shipment.status != 'cancelled' &&
+        cancelReason.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: AppText(context.tr('اكتب سبب الإلغاء.'))));
+      return;
+    }
     await _applyOrderAction(
       () => _operations.updateShipment(
         order.id,
@@ -293,9 +335,50 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
         status: status,
         shippingCompanyId: companyId,
         trackingNumber: tracking.text.trim(),
+        reason: cancelReason,
+        employeeMode: widget.employeeMode,
       ),
       'تم تحديث بيانات الشحن وإشعار العميل.',
     );
+  }
+
+  /// الزبون رفض استلام الطرد: يُلغى وتعود كمياته، وأجرة شحنه دين عليه.
+  Future<void> _markRefused(Order order, Shipment shipment) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const AppText('الزبون رفض الاستلام'),
+        content: const AppText(
+            'الزبون رفض استلام الطرد؟ يُلغى الطرد وتعود كمياته، وتُسجَّل أجرة شحنه ديناً عليه ويُمنع من الدفع عند الاستلام شهراً.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const AppText('تراجع')),
+          FilledButton(
+              key: const ValueKey('parcel-refused-confirm'),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const AppText('سجّل الرفض')),
+        ],
+      ),
+    );
+    if (ok != true || shipment.id == null || !mounted) return;
+    setState(() => _isUpdating = true);
+    try {
+      final result = await _service.markRefused(order.id, shipment.id!,
+          employeeMode: widget.employeeMode);
+      if (!mounted) return;
+      setState(() => _order = result.order);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: AppText(result.message ?? 'سُجّل رفض الاستلام.')));
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: AppText(e.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
   }
 
   Widget _buildPaymentCard(Order order) {
@@ -357,6 +440,68 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
     return details.isEmpty ? 'لم تُحدَّد شركة الشحن بعد' : details;
   }
 
+  Widget _buildTimelineCard(Order order) {
+    String when(DateTime? at) {
+      if (at == null) return '';
+      final local = at.toLocal();
+      String two(int n) => n.toString().padLeft(2, '0');
+      return '${local.year}-${two(local.month)}-${two(local.day)} ${two(local.hour)}:${two(local.minute)}';
+    }
+
+    return Card(
+      key: const ValueKey('order-timeline'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const AppText('السجل الزمني للطلب',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            for (final event in order.timeline)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(_timelineIcon(event.kind),
+                        size: 18, color: AppColors.muted),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(event.text),
+                          if (event.by != null)
+                            Text(event.by!,
+                                style: const TextStyle(
+                                    fontSize: 12, color: AppColors.muted)),
+                        ],
+                      ),
+                    ),
+                    Text(when(event.at),
+                        style: const TextStyle(
+                            fontSize: 12, color: AppColors.muted)),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static IconData _timelineIcon(String kind) => switch (kind) {
+        'created' => Icons.add_shopping_cart,
+        'paid' => Icons.credit_card,
+        'shipped' => Icons.local_shipping_outlined,
+        'delivered' => Icons.check_circle_outline,
+        'refused' => Icons.block,
+        'cancelled' => Icons.cancel_outlined,
+        'return' => Icons.assignment_return_outlined,
+        _ => Icons.badge_outlined,
+      };
+
   Widget _buildShipmentsCard(Order order) {
     return Card(
       child: Padding(
@@ -369,19 +514,36 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
               child: AppText('الشحنات',
                   style: TextStyle(fontWeight: FontWeight.bold)),
             ),
-            for (final shipment in order.shipments)
+            for (final shipment in order.shipments) ...[
               ListTile(
                 leading: const Icon(Icons.local_shipping_outlined),
                 title: AppText(
                     '${shipment.sellerName ?? 'شحنة'} • ${shipment.statusLabel}'),
-                subtitle: AppText(_shipmentDetails(shipment)),
+                subtitle: AppText(shipment.refused
+                    ? 'رفض الزبون الاستلام'
+                    : _shipmentDetails(shipment)),
                 trailing: IconButton(
+                  key: ValueKey('parcel-edit-${shipment.id}'),
                   tooltip: context.tr('تعديل الشحنة'),
                   icon: const Icon(Icons.edit_outlined),
                   onPressed:
                       _isUpdating ? null : () => _editShipment(order, shipment),
                 ),
               ),
+              if (shipment.canRecordRefusal)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: OutlinedButton.icon(
+                    key: ValueKey('parcel-refused-${shipment.id}'),
+                    onPressed: _isUpdating
+                        ? null
+                        : () => _markRefused(order, shipment),
+                    icon: const Icon(Icons.block, color: AppColors.danger),
+                    label: const AppText('الزبون رفض الاستلام',
+                        style: TextStyle(color: AppColors.danger)),
+                  ),
+                ),
+            ],
           ],
         ),
       ),
@@ -539,10 +701,10 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
         if (!widget.employeeMode) ...[
           const SizedBox(height: 16),
           _buildPaymentCard(order),
-          if (order.shipments.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            _buildShipmentsCard(order),
-          ],
+        ],
+        if (order.shipments.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _buildShipmentsCard(order),
         ],
         const SizedBox(height: 16),
 
@@ -561,6 +723,10 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
             ),
           ),
         ),
+        if (order.timeline.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _buildTimelineCard(order),
+        ],
         const SizedBox(height: 16),
 
         // المنتجات
@@ -619,7 +785,23 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
             ),
           ),
         ),
-        if (widget.employeeMode && order.archivedAt == null) ...[
+        if (widget.employeeMode &&
+            order.archivedAt == null &&
+            order.archiveBlocker != null) ...[
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              const Icon(Icons.archive_outlined, color: AppColors.muted),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: AppText(order.archiveBlocker!,
+                      style: const TextStyle(color: AppColors.muted))),
+            ],
+          ),
+        ],
+        if (widget.employeeMode &&
+            order.archivedAt == null &&
+            order.archiveBlocker == null) ...[
           const SizedBox(height: 16),
           OutlinedButton.icon(
             onPressed: () async {

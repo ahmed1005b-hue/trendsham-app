@@ -346,10 +346,32 @@ class AdminService {
   }
 
   // ===== إدارة الطلبات =====
-  Future<List<Order>> orders({bool employeeMode = false}) async {
-    final data =
-        await _api.get(employeeMode ? '/employee/orders' : '/admin/orders');
+  /// [view]: active | new | late | archived (للمدير). [query]: رقم الطلب أو اسم الزبون أو هاتفه.
+  Future<List<Order>> orders(
+      {bool employeeMode = false,
+      String? query,
+      String? view,
+      String? status}) async {
+    final data = await _api
+        .get(employeeMode ? '/employee/orders' : '/admin/orders', query: {
+      if (query != null && query.isNotEmpty) 'q': query,
+      if (view != null && view != 'active') 'view': view,
+      if (status != null && status.isNotEmpty) 'status': status,
+    });
     return (data['data'] as List).map((o) => Order.fromJson(o)).toList();
+  }
+
+  /// الزبون رفض استلام طرد: يُلغى الطرد وتعود كمياته، وأجرة شحنه دين عليه.
+  Future<({Order order, String? message})> markRefused(
+      int orderId, int shipmentId,
+      {bool employeeMode = false}) async {
+    final prefix = employeeMode ? '/employee' : '/admin';
+    final data =
+        await _api.post('$prefix/orders/$orderId/parcels/$shipmentId/refused');
+    return (
+      order: Order.fromJson(data['data'] ?? data),
+      message: data is Map ? data['message']?.toString() : null,
+    );
   }
 
   Future<Order> getOrder(int id, {bool employeeMode = false}) async {
