@@ -2114,5 +2114,8 @@
   "لا يستطيع الفريق حتى مع الإذن: سحب الأموال، أو رؤية بياناتك البنكية ووثائق الهوية، أو تغيير كلمة السر، أو قراءة محادثات عملائك، أو حذف منتجاتك.": "Even with access, the team cannot withdraw money, see your bank details or identity documents, change your password, read your customers' chats, or delete your products.",
   "إنهاء الإذن": "End access",
   "اسمح لفريق الدعم بالدخول": "Allow the support team in",
-  "ما فعله فريق الدعم في متجرك": "What the support team did in your store"
+  "ما فعله فريق الدعم في متجرك": "What the support team did in your store",
+  "اختر طريقة الدفع.": "Choose a payment method.",
+  "أؤكد أني سأدفع المبلغ كاملاً نقداً عند استلام الطلب.": "I confirm I will pay the full amount in cash when I receive the order.",
+  "أكّد أنك ستدفع المبلغ نقداً عند الاستلام، أو اختر الدفع بالبطاقة.": "Confirm you will pay in cash on delivery, or choose card payment."
 }

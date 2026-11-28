@@ -2114,5 +2114,8 @@
   "لا يستطيع الفريق حتى مع الإذن: سحب الأموال، أو رؤية بياناتك البنكية ووثائق الهوية، أو تغيير كلمة السر، أو قراءة محادثات عملائك، أو حذف منتجاتك.": "İzin olsa bile ekip para çekemez, banka bilgilerinizi veya kimlik belgelerinizi göremez, şifrenizi değiştiremez, müşteri sohbetlerinizi okuyamaz veya ürünlerinizi silemez.",
   "إنهاء الإذن": "İzni sonlandır",
   "اسمح لفريق الدعم بالدخول": "Destek ekibine izin ver",
-  "ما فعله فريق الدعم في متجرك": "Destek ekibinin mağazanızda yaptıkları"
+  "ما فعله فريق الدعم في متجرك": "Destek ekibinin mağazanızda yaptıkları",
+  "اختر طريقة الدفع.": "Bir ödeme yöntemi seçin.",
+  "أؤكد أني سأدفع المبلغ كاملاً نقداً عند استلام الطلب.": "Siparişi teslim aldığımda tutarın tamamını nakit ödeyeceğimi onaylıyorum.",
+  "أكّد أنك ستدفع المبلغ نقداً عند الاستلام، أو اختر الدفع بالبطاقة.": "Teslimatta nakit ödeyeceğinizi onaylayın veya kartla ödemeyi seçin."
 }

@@ -207,6 +207,7 @@ class CheckoutService {
     required String shippingPhone,
     required String shippingAddress,
     required String paymentMethod,
+    bool codConfirmed = false,
     int? couponId,
     int usePoints = 0,
     bool useGiftBalance = false,
@@ -225,6 +226,8 @@ class CheckoutService {
       if (governorate != null) 'shipping_governorate': governorate,
       if (pickupStores.isNotEmpty) 'pickup_stores': pickupStores.toList(),
       'payment_method': paymentMethod,
+      // تعهّد الزبون بالدفع نقداً عند الاستلام (الخادم يرفض الطلب بدونه)
+      if (paymentMethod == 'cash_on_delivery') 'cod_confirmed': codConfirmed,
       // غائب = الأفضل تلقائياً (يُعاد التحقق في الخادم)
       if (couponId != null) 'customer_coupon_id': couponId,
       // نقاط الولاء كخصم (يُعاد التحقق والقص في الخادم)

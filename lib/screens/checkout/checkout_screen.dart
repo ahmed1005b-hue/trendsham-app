@@ -36,7 +36,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _addressService = AddressService();
   List<UserAddress> _addresses = const [];
   int? _selectedAddressId;
-  String _paymentMethod = 'cash_on_delivery';
+
+  /// لا طريقة دفع مختارة مسبقاً: الطلب لا يصل للبائع إلا بدفع إلكتروني ناجح
+  /// أو بتعهّد صريح من الزبون بالدفع عند الاستلام.
+  String? _paymentMethod;
+  bool _codConfirmed = false;
 
   /// طريقة الاستلام: home توصيل للبيت، center استلام من مركز كرم
   String _deliveryMethod = 'home';
@@ -241,7 +245,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _governorate ??= summary.shippingGovernorate;
         // بعد رفض استلام طلب: الدفع عند الاستلام ممنوع مؤقتاً
         if (summary.codBlocked && _paymentMethod == 'cash_on_delivery') {
-          _paymentMethod = 'card';
+          _paymentMethod = null;
+          _codConfirmed = false;
         }
         // الكوبون المختار لم يعد صالحاً: نرجع للأفضل تلقائياً بدل أن يعلق العميل
         if (summary.couponDroppedReason != null) {
@@ -425,6 +430,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
     if (!_formKey.currentState!.validate()) return;
+    final paymentMethod = _paymentMethod;
+    final paymentProblem = paymentMethod == null
+        ? 'اختر طريقة الدفع.'
+        : paymentMethod == 'cash_on_delivery' && !_codConfirmed
+            ? 'أكّد أنك ستدفع المبلغ نقداً عند الاستلام، أو اختر الدفع بالبطاقة.'
+            : null;
+    if (paymentProblem != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: AppText(context.tr(paymentProblem))),
+      );
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -437,7 +454,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         shippingName: _nameController.text.trim(),
         shippingPhone: _phoneController.text.trim(),
         shippingAddress: _addressController.text.trim(),
-        paymentMethod: _paymentMethod,
+        paymentMethod: paymentMethod!,
+        codConfirmed: _codConfirmed,
         couponId: _couponChoice,
         usePoints: _pointsToUse,
         useGiftBalance: _useGiftBalance && (_summary?.giftBalance ?? 0) > 0,
@@ -799,7 +817,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 RadioGroup<String>(
                   groupValue: _paymentMethod,
                   onChanged: (v) {
-                    if (v != null) setState(() => _paymentMethod = v);
+                    if (v != null) {
+                      setState(() {
+                        _paymentMethod = v;
+                        if (v != 'cash_on_delivery') _codConfirmed = false;
+                      });
+                    }
                   },
                   child: Column(
                     children: [
@@ -832,6 +855,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ],
                   ),
                 ),
+                if (_paymentMethod == 'cash_on_delivery')
+                  CheckboxListTile(
+                    key: const ValueKey('checkout-cod-confirm'),
+                    value: _codConfirmed,
+                    onChanged: (v) => setState(() => _codConfirmed = v == true),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                    title: const AppText(
+                        'أؤكد أني سأدفع المبلغ كاملاً نقداً عند استلام الطلب.',
+                        style: TextStyle(fontSize: 13)),
+                  ),
                 if (_paymentInProgress) ...[
                   const SizedBox(height: 10),
                   Container(
