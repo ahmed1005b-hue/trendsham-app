@@ -2103,5 +2103,16 @@
   "بعد استلام المنتج المُرجَع تردّ إدارة المنصة المبلغ وتُعلمك بطريقة الرد.\n• تُرد أجرة التوصيل عندما يُرجَع الطلب كله لأن المنتج تالف أو لا يطابق الوصف.\n• تُسحب نقاط الولاء التي كسبتها بقدر المبلغ المسترد.\n• إذا أُرجع الطلب كله يعود إليك الكوبون الذي استخدمته فيه.": "İade edilen ürün teslim alındıktan sonra platform ekibi ücretinizi iade eder ve iadenin nasıl yapıldığını size bildirir.\n• Siparişin tamamı hasarlı veya açıklamaya uymadığı için iade edilirse teslimat ücreti de iade edilir.\n• Kazandığınız sadakat puanları iade tutarı oranında geri alınır.\n• Siparişin tamamı iade edilirse kullandığınız kupon size geri verilir.",
   "7. حالات غير مشمولة بالاسترجاع": "7. İade kapsamı dışındaki durumlar",
   "8. من يتخذ القرار؟": "8. Kararı kim verir?",
-  "البائع يرد أولاً على طلب الإرجاع، وإدارة المنصة تفصل عند الخلاف أو إذا لم يرد البائع، وهي وحدها التي تردّ المال.": "İade talebine önce satıcı yanıt verir; anlaşmazlıkta veya satıcı yanıt vermezse platform ekibi karar verir ve parayı yalnızca platform ekibi iade eder."
+  "البائع يرد أولاً على طلب الإرجاع، وإدارة المنصة تفصل عند الخلاف أو إذا لم يرد البائع، وهي وحدها التي تردّ المال.": "İade talebine önce satıcı yanıt verir; anlaşmazlıkta veya satıcı yanıt vermezse platform ekibi karar verir ve parayı yalnızca platform ekibi iade eder.",
+  "السماح لفريق الدعم بالدخول": "Destek ekibine izin ver",
+  "سيستطيع فريق الدعم فتح لوحة متجرك لحل المشكلة حتى تُنهي الإذن. كل ما يفعله يُسجَّل وتراه هنا.": "Destek ekibi, siz izni sonlandırana kadar sorunu çözmek için mağaza panelinizi açabilecek. Yaptıkları her şey kaydedilir ve burada gösterilir.",
+  "اسمح": "İzin ver",
+  "تعذّر الحفظ، حاول مجدداً.": "Kaydedilemedi, lütfen tekrar deneyin.",
+  "دخول فريق الدعم إلى لوحة متجرك": "Destek ekibinin mağaza panelinize erişimi",
+  "مسموح الآن. يبقى الإذن حتى تُنهيه.": "Şu an izin verildi. İzin siz sonlandırana kadar geçerlidir.",
+  "إذا واجهتك مشكلة في متجرك، اسمح لفريق الدعم بفتح لوحتك لحلها. يبقى الإذن حتى تُنهيه أنت.": "Mağazanızda bir sorun varsa, çözmesi için destek ekibinin panelinizi açmasına izin verin. İzin siz sonlandırana kadar geçerlidir.",
+  "لا يستطيع الفريق حتى مع الإذن: سحب الأموال، أو رؤية بياناتك البنكية ووثائق الهوية، أو تغيير كلمة السر، أو قراءة محادثات عملائك، أو حذف منتجاتك.": "İzin olsa bile ekip para çekemez, banka bilgilerinizi veya kimlik belgelerinizi göremez, şifrenizi değiştiremez, müşteri sohbetlerinizi okuyamaz veya ürünlerinizi silemez.",
+  "إنهاء الإذن": "İzni sonlandır",
+  "اسمح لفريق الدعم بالدخول": "Destek ekibine izin ver",
+  "ما فعله فريق الدعم في متجرك": "Destek ekibinin mağazanızda yaptıkları"
 }

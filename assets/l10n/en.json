@@ -2103,5 +2103,16 @@
   "بعد استلام المنتج المُرجَع تردّ إدارة المنصة المبلغ وتُعلمك بطريقة الرد.\n• تُرد أجرة التوصيل عندما يُرجَع الطلب كله لأن المنتج تالف أو لا يطابق الوصف.\n• تُسحب نقاط الولاء التي كسبتها بقدر المبلغ المسترد.\n• إذا أُرجع الطلب كله يعود إليك الكوبون الذي استخدمته فيه.": "Once the returned item is received, the platform team refunds you and tells you how the refund was made.\n• The delivery fee is refunded when the whole order is returned because it was damaged or not as described.\n• Loyalty points you earned are taken back in proportion to the refund.\n• If the whole order is returned, the coupon you used on it is given back.",
   "7. حالات غير مشمولة بالاسترجاع": "7. Cases not covered by returns",
   "8. من يتخذ القرار؟": "8. Who decides?",
-  "البائع يرد أولاً على طلب الإرجاع، وإدارة المنصة تفصل عند الخلاف أو إذا لم يرد البائع، وهي وحدها التي تردّ المال.": "The seller answers a return request first; the platform team decides disputes or when the seller does not answer, and only the platform team refunds money."
+  "البائع يرد أولاً على طلب الإرجاع، وإدارة المنصة تفصل عند الخلاف أو إذا لم يرد البائع، وهي وحدها التي تردّ المال.": "The seller answers a return request first; the platform team decides disputes or when the seller does not answer, and only the platform team refunds money.",
+  "السماح لفريق الدعم بالدخول": "Allow the support team in",
+  "سيستطيع فريق الدعم فتح لوحة متجرك لحل المشكلة حتى تُنهي الإذن. كل ما يفعله يُسجَّل وتراه هنا.": "The support team will be able to open your store panel to fix the problem until you end access. Everything they do is recorded and shown here.",
+  "اسمح": "Allow",
+  "تعذّر الحفظ، حاول مجدداً.": "Couldn't save, please try again.",
+  "دخول فريق الدعم إلى لوحة متجرك": "Support team access to your store panel",
+  "مسموح الآن. يبقى الإذن حتى تُنهيه.": "Allowed now. Access stays until you end it.",
+  "إذا واجهتك مشكلة في متجرك، اسمح لفريق الدعم بفتح لوحتك لحلها. يبقى الإذن حتى تُنهيه أنت.": "If you have a problem with your store, let the support team open your panel to fix it. Access stays until you end it.",
+  "لا يستطيع الفريق حتى مع الإذن: سحب الأموال، أو رؤية بياناتك البنكية ووثائق الهوية، أو تغيير كلمة السر، أو قراءة محادثات عملائك، أو حذف منتجاتك.": "Even with access, the team cannot withdraw money, see your bank details or identity documents, change your password, read your customers' chats, or delete your products.",
+  "إنهاء الإذن": "End access",
+  "اسمح لفريق الدعم بالدخول": "Allow the support team in",
+  "ما فعله فريق الدعم في متجرك": "What the support team did in your store"
 }
