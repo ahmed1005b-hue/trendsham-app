@@ -196,6 +196,9 @@ class Order {
   final bool refused;
   final int? itemsCount;
   final bool canBeCancelled;
+
+  /// مدفوع ولم يُرد مبلغه: لا يُلغى إلا من المدير مع تسجيل رد المال
+  final bool needsRefundBeforeCancel;
   final List<OrderItem> items;
   final String? paymentStatus;
 
@@ -221,6 +224,7 @@ class Order {
     this.refused = false,
     this.itemsCount,
     required this.canBeCancelled,
+    this.needsRefundBeforeCancel = false,
     this.items = const [],
     this.paymentStatus,
     this.paymentMethod,
@@ -238,6 +242,14 @@ class Order {
   };
 
   String get statusLabel => statusLabels[status] ?? status;
+
+  /// خرجت بضاعة من الطلب: لا يُلغى بعدها (رفض استلام أو إرجاع). نفس قاعدة الخادم.
+  bool get hasShipped =>
+      status == 'shipped' ||
+      status == 'delivered' ||
+      shipments.any((s) =>
+          s.isOpen &&
+          ['shipped', 'in_transit', 'delivered'].contains(s.status));
 
   /// طلب من عدة متاجر وصل بعض طروده للشحن وبعضها لم يُشحن بعد
   bool get isPartiallyShipped {
@@ -278,6 +290,8 @@ class Order {
         return 'فشل الدفع';
       case 'cancelled':
         return 'ملغي';
+      case 'refunded':
+        return 'مُسترد';
       case 'pending':
       case 'none':
       case '':
@@ -325,6 +339,7 @@ class Order {
       itemsCount:
           _toInt(json['items_count'] ?? json['total_items'] ?? json['count']),
       canBeCancelled: _toBool(json['can_be_cancelled']),
+      needsRefundBeforeCancel: _toBool(json['needs_refund_before_cancel']),
       items: (json['items'] as List<dynamic>? ?? const [])
           .whereType<Map>()
           .map((i) => OrderItem.fromJson(Map<String, dynamic>.from(i)))

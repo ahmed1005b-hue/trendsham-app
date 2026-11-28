@@ -359,13 +359,29 @@ class AdminService {
   }
 
   Future<Order> updateOrderStatus(int id, String status,
-      {String? trackingNumber, bool employeeMode = false}) async {
+      {String? trackingNumber,
+      String? reason,
+      bool employeeMode = false}) async {
     final prefix = employeeMode ? '/employee' : '/admin';
     final data = await _api.put('$prefix/orders/$id/status', body: {
       'status': status,
+      // سبب الإلغاء إلزامي في الخادم ويصل للزبون والبائع
+      if (reason != null && reason.isNotEmpty) 'reason': reason,
       // الموظف لا يرى حقل رقم التتبع، والخادم لا يقبله منه
       if (!employeeMode && trackingNumber != null && trackingNumber.isNotEmpty)
         'tracking_number': trackingNumber,
+    });
+    return Order.fromJson(data['data'] ?? data);
+  }
+
+  /// إلغاء طلب مدفوع مع تسجيل رد المال للزبون (المدير فقط).
+  /// [method]: card | bank_transfer | cash
+  Future<Order> cancelWithRefund(int id,
+      {required String reason, required String method, String? note}) async {
+    final data = await _api.post('/admin/orders/$id/cancel-refund', body: {
+      'reason': reason,
+      'refund_method': method,
+      if (note != null && note.isNotEmpty) 'refund_note': note,
     });
     return Order.fromJson(data['data'] ?? data);
   }

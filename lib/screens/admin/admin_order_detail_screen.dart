@@ -11,11 +11,13 @@ import '../../widgets/order_tracker_timeline.dart';
 class AdminOrderDetailScreen extends StatefulWidget {
   final int orderId;
   final bool employeeMode;
+  final AdminService? service;
 
   const AdminOrderDetailScreen({
     super.key,
     required this.orderId,
     this.employeeMode = false,
+    this.service,
   });
 
   @override
@@ -23,18 +25,36 @@ class AdminOrderDetailScreen extends StatefulWidget {
 }
 
 class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
-  final AdminService _service = AdminService();
+  late final AdminService _service = widget.service ?? AdminService();
   final AdminOperationsService _operations = AdminOperationsService();
   Order? _order;
   String? _error;
 
-  static const _employeeStatuses = {
+  /// نفس قواعد الخادم (StaffOrderStatusChanger): للأمام فقط، و«مدفوع» من زر تأكيد الدفع،
+  /// والإلغاء قبل الشحن ولغير المدفوع.
+  static const _rank = {
+    'pending': 0,
+    'paid': 0,
+    'processing': 1,
+    'shipped': 2,
+    'delivered': 3,
+  };
+  static const _staffStatuses = [
     'processing',
     'shipped',
     'delivered',
     'cancelled'
+  ];
+  static const _refundMethods = {
+    'card': 'إلى بطاقة الزبون',
+    'bank_transfer': 'تحويل بنكي',
+    'cash': 'نقداً',
   };
-  String _selectedStatus = 'pending';
+  static const _shippedCancelMessage =
+      'شُحن هذا الطلب فلا يُلغى. إن رفض الزبون الاستلام سجّل «رفض الاستلام» على الطرد، وإن استلمه فالإرجاع يكون بطلب إرجاع.';
+  static const _paidCancelMessage =
+      'هذا الطلب مدفوع، فيلغيه المدير مع تسجيل رد المال للزبون.';
+  String? _selectedStatus;
   final TextEditingController _trackingController = TextEditingController();
   bool _isUpdating = false;
 
@@ -53,7 +73,7 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
       );
       setState(() {
         _order = order;
-        _selectedStatus = order.status;
+        _selectedStatus = null;
         _trackingController.text = order.shipments.isNotEmpty
             ? (order.shipments.first.trackingNumber ?? '')
             : '';
@@ -65,18 +85,46 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
     }
   }
 
+  List<String> _nextStatuses(Order order) => _staffStatuses.where((s) {
+        if (s == 'cancelled') {
+          return !order.hasShipped && !order.needsRefundBeforeCancel;
+        }
+        return (_rank[s] ?? 0) > (_rank[order.status] ?? 0);
+      }).toList();
+
+  /// يطلب سبب الإلغاء. null عند التراجع.
+  Future<String?> _askReason() => showDialog<String>(
+      context: context, builder: (_) => const _ReasonDialog());
+
   Future<void> _updateStatus() async {
+    final status = _selectedStatus;
+    if (status == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: AppText(context.tr('اختر الحالة الجديدة.'))));
+      return;
+    }
+    String? reason;
+    if (status == 'cancelled') {
+      reason = await _askReason();
+      if (!mounted || reason == null) return;
+      if (reason.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: AppText(context.tr('اكتب سبب الإلغاء.'))));
+        return;
+      }
+    }
     setState(() => _isUpdating = true);
     try {
       final updatedOrder = await _service.updateOrderStatus(
         widget.orderId,
-        _selectedStatus,
+        status,
         trackingNumber: _trackingController.text.trim(),
+        reason: reason,
         employeeMode: widget.employeeMode,
       );
       setState(() {
         _order = updatedOrder;
-        _selectedStatus = updatedOrder.status;
+        _selectedStatus = null;
         _trackingController.text = updatedOrder.shipments.isNotEmpty
             ? (updatedOrder.shipments.first.trackingNumber ?? '')
             : '';
@@ -117,6 +165,19 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
     } finally {
       if (mounted) setState(() => _isUpdating = false);
     }
+  }
+
+  Future<void> _cancelWithRefund(Order order) async {
+    final result = await showDialog<_RefundAnswer>(
+      context: context,
+      builder: (_) =>
+          _RefundDialog(amount: order.total, methods: _refundMethods),
+    );
+    if (result == null || !mounted) return;
+    await _applyOrderAction(
+        () => _service.cancelWithRefund(order.id,
+            reason: result.reason, method: result.method, note: result.note),
+        'أُلغي الطلب وسُجّل رد المال للزبون.');
   }
 
   Future<void> _markPaid(Order order) async {
@@ -376,26 +437,48 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                   ],
                 ),
                 const Divider(),
-                const AppText('تحديث حالة الطلب:'),
+                AppText(
+                    '${context.tr('الحالة الحالية')}: ${context.tr(order.statusLabel)}',
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedStatus,
-                  decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12)),
-                  // الموظف: لا «مدفوع» ولا رجوع للمراجعة (نفس قواعد الخادم)
-                  items: Order.statusLabels.entries
-                      .where((e) =>
-                          !widget.employeeMode ||
-                          e.key == _selectedStatus ||
-                          _employeeStatuses.contains(e.key))
-                      .map((e) {
-                    return DropdownMenuItem(
-                        value: e.key, child: AppText(e.value));
-                  }).toList(),
-                  onChanged: (val) => setState(() => _selectedStatus = val!),
-                ),
-                const SizedBox(height: 12),
+                if (order.status == 'cancelled')
+                  const AppText('الطلب ملغى.')
+                else ...[
+                  const AppText('تحديث حالة الطلب:'),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    key: ValueKey('order-status-${order.status}'),
+                    initialValue: _selectedStatus,
+                    hint: const AppText('اختر الحالة الجديدة'),
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12)),
+                    items: _nextStatuses(order)
+                        .map((s) => DropdownMenuItem(
+                            value: s,
+                            child: AppText(Order.statusLabels[s] ?? s)))
+                        .toList(),
+                    onChanged: (val) => setState(() => _selectedStatus = val),
+                  ),
+                  const SizedBox(height: 6),
+                  const AppText('الحالة تتقدم للأمام فقط.',
+                      style: TextStyle(fontSize: 12, color: AppColors.muted)),
+                  if (order.hasShipped)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6),
+                      child: AppText(_shippedCancelMessage,
+                          style:
+                              TextStyle(fontSize: 12, color: AppColors.muted)),
+                    )
+                  else if (order.needsRefundBeforeCancel && widget.employeeMode)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6),
+                      child: AppText(_paidCancelMessage,
+                          style:
+                              TextStyle(fontSize: 12, color: AppColors.muted)),
+                    ),
+                  const SizedBox(height: 12),
+                ],
                 if (!widget.employeeMode) ...[
                   const AppText('رقم بوليصة الشحن (اختياري):'),
                   const SizedBox(height: 8),
@@ -411,23 +494,44 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                   ),
                 ],
                 const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isUpdating ? null : _updateStatus,
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white),
-                    child: _isUpdating
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : const AppText('حفظ التحديثات',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
+                if (order.status != 'cancelled')
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      key: const ValueKey('order-status-save'),
+                      onPressed: _isUpdating ? null : _updateStatus,
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white),
+                      child: _isUpdating
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
+                          : const AppText('حفظ التحديثات',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
                   ),
-                ),
+                if (!widget.employeeMode &&
+                    order.status != 'cancelled' &&
+                    order.needsRefundBeforeCancel &&
+                    !order.hasShipped) ...[
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      key: const ValueKey('order-cancel-refund'),
+                      onPressed:
+                          _isUpdating ? null : () => _cancelWithRefund(order),
+                      icon: const Icon(Icons.currency_exchange,
+                          color: AppColors.danger),
+                      label: const AppText(
+                          'إلغاء الطلب المدفوع وتسجيل رد المال',
+                          style: TextStyle(color: AppColors.danger)),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -552,6 +656,153 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
             label: const AppText('أرشفة مع الاحتفاظ بالسجل'),
           ),
         ],
+      ],
+    );
+  }
+}
+
+class _RefundAnswer {
+  const _RefundAnswer(this.method, this.reason, this.note);
+  final String method;
+  final String reason;
+  final String note;
+}
+
+/// إلغاء طلب مدفوع: كيف رُدّ المال، وسبب الإلغاء (يصل للزبون والبائع).
+class _RefundDialog extends StatefulWidget {
+  const _RefundDialog({required this.amount, required this.methods});
+
+  final double amount;
+  final Map<String, String> methods;
+
+  @override
+  State<_RefundDialog> createState() => _RefundDialogState();
+}
+
+class _RefundDialogState extends State<_RefundDialog> {
+  String? _method;
+  final _reason = TextEditingController();
+  final _note = TextEditingController();
+  String? _problem;
+
+  @override
+  void dispose() {
+    _reason.dispose();
+    _note.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final problem = _method == null
+        ? 'اختر كيف رُدّ المال للزبون.'
+        : _reason.text.trim().isEmpty
+            ? 'اكتب سبب الإلغاء.'
+            : null;
+    if (problem != null) {
+      setState(() => _problem = problem);
+      return;
+    }
+    Navigator.pop(context,
+        _RefundAnswer(_method!, _reason.text.trim(), _note.text.trim()));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final amount = '${widget.amount.toStringAsFixed(0)} ل.س';
+    return AlertDialog(
+      title: const AppText('إلغاء الطلب المدفوع وتسجيل رد المال'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(context
+                .tr('المبلغ المدفوع الذي يجب رده: :amount. رصيد الهدايا (إن وُجد) يعود للزبون تلقائياً.')
+                .replaceAll(':amount', amount)),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              key: const ValueKey('refund-method'),
+              initialValue: _method,
+              hint: const AppText('كيف رُدّ المال؟'),
+              items: widget.methods.entries
+                  .map((e) =>
+                      DropdownMenuItem(value: e.key, child: AppText(e.value)))
+                  .toList(),
+              onChanged: (v) => setState(() => _method = v),
+            ),
+            TextField(
+              key: const ValueKey('refund-note'),
+              controller: _note,
+              maxLength: 255,
+              decoration: InputDecoration(
+                  labelText: context.tr('رقم العملية أو ملاحظة (اختياري)')),
+            ),
+            TextField(
+              key: const ValueKey('refund-reason'),
+              controller: _reason,
+              maxLength: 500,
+              maxLines: 2,
+              decoration: InputDecoration(
+                  labelText: context.tr('سبب الإلغاء (يصل للزبون والبائع)')),
+            ),
+            if (_problem != null)
+              AppText(_problem!,
+                  style: const TextStyle(color: AppColors.danger)),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const AppText('تراجع')),
+        FilledButton(
+            key: const ValueKey('refund-submit'),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: _submit,
+            child: const AppText('ألغِ الطلب وسجّل رد المال')),
+      ],
+    );
+  }
+}
+
+/// سبب الإلغاء (يصل للزبون والبائع). الحقل يملكه الحوار فيبقى حياً حتى يُغلق.
+class _ReasonDialog extends StatefulWidget {
+  const _ReasonDialog();
+
+  @override
+  State<_ReasonDialog> createState() => _ReasonDialogState();
+}
+
+class _ReasonDialogState extends State<_ReasonDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const AppText('سبب الإلغاء'),
+      content: TextField(
+        key: const ValueKey('order-cancel-reason'),
+        controller: _controller,
+        autofocus: true,
+        maxLength: 500,
+        maxLines: 3,
+        decoration: InputDecoration(
+            hintText: context.tr('سبب الإلغاء (يصل للزبون والبائع)')),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const AppText('تراجع')),
+        FilledButton(
+            key: const ValueKey('order-cancel-confirm'),
+            onPressed: () => Navigator.pop(context, _controller.text.trim()),
+            child: const AppText('ألغِ الطلب')),
       ],
     );
   }
